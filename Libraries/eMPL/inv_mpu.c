@@ -1863,7 +1863,7 @@ int mpu_read_fifo_stream(unsigned short length, unsigned char *data,
 	}
 	
 //modified by hetao.su
-#if 0
+#if 1
 	if (fifo_count > (st.hw->max_fifo >> 1)) {
 		/* FIFO is 50% full, better check overflow bit. */
 		if (i2c_read(st.hw->addr, st.reg->int_status, 1, tmp))

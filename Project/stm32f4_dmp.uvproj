@@ -362,7 +362,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER STM32F40_41xxx ARM_MATH_CM4 __FPU_PRESENT MPU9250</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Application\Include;..\Libraries\eMPL</IncludePath>
+              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Application\Include;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -519,6 +519,46 @@
               <FileName>inv_mpu_dmp_motion_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Libraries\eMPL\inv_mpu_dmp_motion_driver.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Algorithm</GroupName>
+          <Files>
+            <File>
+              <FileName>EKF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\EKF.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Matrix</GroupName>
+          <Files>
+            <File>
+              <FileName>Matrix.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Matrix\src\Matrix.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Math</GroupName>
+          <Files>
+            <File>
+              <FileName>FastMath.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Math\src\FastMath.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>DSP_Lib</GroupName>
+          <Files>
+            <File>
+              <FileName>arm_cortexM4lf_math.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\Libraries\CMSIS\DSP_Lib\Lib\arm_cortexM4lf_math.lib</FilePath>
             </File>
           </Files>
         </Group>
