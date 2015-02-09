@@ -105,7 +105,7 @@ int main(void)
 	//why DMP fifo must be reset when it overflows.
 	//SPI write operation occur, when you reset DMP fifo,
 	//but it can' write at 20Mhz SPI Clock? Fix me!
-#ifdef USE_EKF
+#if 0
 	RCC_SystemCoreClockUpdate(pFreq168M);
 	Delay_Init();
 	MPU9250_Init();
