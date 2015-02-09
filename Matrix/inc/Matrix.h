@@ -26,15 +26,26 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "arm_math.h"
 
-int Lower_Triangular_Solve(float32_t *L, float32_t B[], float32_t x[], int n);
-int Lower_Triangular_Inverse(float32_t *L, int n);
-int Upper_Triangular_Solve(float32_t *U, float32_t B[], float32_t x[], int n);
-int Choleski_LU_Decomposition(float32_t*, int);
-int Choleski_LU_Inverse(float32_t*, int);
-
 void arm_mat_zero_f32(arm_matrix_instance_f32* s);
 arm_status mat_identity(float32_t *pData, uint16_t numRows, uint16_t numCols, float32_t value);
 arm_status arm_mat_identity_f32(arm_matrix_instance_f32* s, float32_t value);
 arm_status arm_mat_fill_f32(arm_matrix_instance_f32* s, float32_t *pData, uint32_t blockSize);
+arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s, uint32_t n);
+
+__inline void arm_mat_getcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col)
+{
+	int nrows = s->numRows, ncols = s->numCols;
+	float32_t *S = s->pData;
+	int i = 0;
+	for (S += col; i < nrows; S += ncols, i++) x[i] = *S;
+}
+
+__inline void arm_mat_setcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col)
+{
+	int nrows = s->numRows, ncols = s->numCols;
+	float32_t *S = s->pData;
+	int i = 0;
+	for (S += col; i < nrows; S += ncols, i++) *S = x[i];
+}
 
 #endif

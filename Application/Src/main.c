@@ -25,13 +25,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "stm32f4_mpu9250.h"
 #include "stm32f4_rcc.h"
 #include "stm32f4_exti.h"
-#include "EKF.h"
 
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
 
 #define DEFAULT_MPU_HZ  (200)
 #define GYRO_TORAD(x) (((float32_t)(x)) * 0.00106422515365507901031932363932f)
+
+#define USE_EKF
+
+#ifdef USE_EKF
+#include "EKF.h"
+#else
+#include "UKF.h"
+#endif
 
 int main(void)
 {
@@ -56,11 +63,15 @@ int main(void)
 	unsigned long ulTimeStamp = 0;
 	float32_t fRPY[3] = {0};
 	
+#ifdef USE_EKF
 	EKF_Filter ekf;
+#else
+	UKF_Filter ukf;
+#endif
 	unsigned long ulNowTime = 0;
 	unsigned long ulLastTime = 0;
 	float32_t fDeltaTime = 0.0f;
-	u32 u32EKFState = 0;
+	u32 u32KFState = 0;
 
 	//Reduced frequency
 	//120 / 4 = 30Mhz APB1, 30/32 = 0.9375 MHz SPI Clock
@@ -68,8 +79,13 @@ int main(void)
 	RCC_SystemCoreClockUpdate(pFreq120M);
 	Delay_Init();
 	MPU9250_Init();
+#ifdef USE_EKF
 	//Create a new EKF object;
 	EKF_New(&ekf);
+#else
+	//Create a new UKF object;
+	UKF_New(&ukf);
+#endif
 
 	//////////////////////////////////////////////////////////////////////////
 	//Init DMP
@@ -89,7 +105,7 @@ int main(void)
 	//why DMP fifo must be reset when it overflows.
 	//SPI write operation occur, when you reset DMP fifo,
 	//but it can' write at 20Mhz SPI Clock? Fix me!
-#if 0
+#ifdef USE_EKF
 	RCC_SystemCoreClockUpdate(pFreq168M);
 	Delay_Init();
 	MPU9250_Init();
@@ -127,16 +143,28 @@ int main(void)
 			fRealQ[3] = (float32_t)lQuat[3] / 1073741824.0f;
 			////
 			Get_Ms(&ulNowTime);
-			if(!u32EKFState){
+			if(!u32KFState){
+#ifdef USE_EKF
 				EKF_Init(&ekf, fRealQ, fRealGyro);
+#else
+				UKF_Init(&ukf, fRealQ, fRealGyro);
+#endif
 				ulLastTime = ulNowTime;
-				u32EKFState = 1;
+				u32KFState = 1;
 			}
 			else{
 				fDeltaTime = 0.001f * (float32_t)(ulNowTime - ulLastTime);
+#ifdef USE_EKF
 				EFK_Update(&ekf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
+#else
+				UKF_Update(&ukf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
+#endif
 			}
+#ifdef USE_EKF
 			EKF_GetAngle(&ekf, fRPY);
+#else
+			UKF_GetAngle(&ukf, fRPY);
+#endif
 
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere

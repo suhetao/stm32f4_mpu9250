@@ -24,6 +24,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "EKF.h"
 #include "FastMath.h"
 
+//////////////////////////////////////////////////////////////////////////
+//all parameters below need to be tune
 #define EKF_PQ_INITIAL 0.000001
 #define EKF_PW_INITIAL 0.000001
 #define EKF_PWB_INITIAL 0.000001
@@ -35,10 +37,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define EKF_RA_INITIAL 0.07
 #define EKF_RW_INITIAL 0.0525
 #define EKF_RM_INITIAL 0.105
-
+//simple complementary filter
 #define EKF_CF_K 0.98f
 #define EKF_CF_QD 2.25f //degree
 #define EKF_CF_QR 0.04363323129985823942309226921222f //radian
+//////////////////////////////////////////////////////////////////////////
 
 void EKF_New(EKF_Filter* ekf)
 {
@@ -82,10 +85,10 @@ void EKF_New(EKF_Filter* ekf)
 	arm_mat_init_f32(&ekf->I, EKF_STATE_DIM, EKF_STATE_DIM, ekf->I_f32);
 	arm_mat_identity_f32(&ekf->I, 1.0f);
 	//////////////////////////////////////////////////////////////////////////
-	arm_mat_init_f32(&ekf->X, EKF_STATE_DIM, 1.0f, ekf->X_f32);
+	arm_mat_init_f32(&ekf->X, EKF_STATE_DIM, 1, ekf->X_f32);
 	arm_mat_zero_f32(&ekf->X);
 	//////////////////////////////////////////////////////////////////////////
-	arm_mat_init_f32(&ekf->Y, EKF_MEASUREMENT_DIM, 1.0f, ekf->Y_f32);
+	arm_mat_init_f32(&ekf->Y, EKF_MEASUREMENT_DIM, 1, ekf->Y_f32);
 	//////////////////////////////////////////////////////////////////////////
 	//
 	arm_mat_init_f32(&ekf->tmpP, EKF_STATE_DIM, EKF_STATE_DIM, ekf->tmpP_f32);
@@ -108,7 +111,7 @@ void EKF_Init(EKF_Filter* ekf, float32_t *q, float32_t *gyro)
 	X[2] = q[2];
 	X[3] = q[3];
 	
-	norm = invSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
@@ -192,7 +195,7 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	X[3] = q3 - (halfdx * q2 - halfdy * q1 + halfdz * q0);
 	//////////////////////////////////////////////////////////////////////////
 	//Re-normalize Quaternion
-	norm = invSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
@@ -209,12 +212,12 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	//Model and measurement differences
 	
 	//Normalize Acc and Mag measurements
-	norm = invSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+	norm = FastInvSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
 	accel[0] *= norm;
 	accel[1] *= norm;
 	accel[2] *= norm;
 	//////////////////////////////////////////////////////////////////////////
-	norm = invSqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
+	norm = FastInvSqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
 	mag[0] *= norm;
 	mag[1] *= norm;
 	mag[2] *= norm;
@@ -334,7 +337,7 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	arm_mat_mult_f32(&ekf->K, &ekf->Y, &ekf->tmpX);
 	arm_mat_add_f32(&ekf->X, &ekf->tmpX, &ekf->X);
 	//normalize quaternion
-	norm = invSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
@@ -370,15 +373,15 @@ void EKF_GetAngle(EKF_Filter* ekf, float32_t* rpy)
 	R[0][0] = 2.0f * (X[0] * X[0] + X[1] * X[1]) - 1.0f;
 	R[0][1] = 2.0f * (X[1] * X[2] + X[0] * X[3]);
 	R[0][2] = 2.0f * (X[1] * X[3] - X[0] * X[2]);
-	R[1][0] = 2.0f * (X[1] * X[2] - X[0] * X[3]);
-	R[1][1] = 2.0f * (X[0] * X[0] + X[2] * X[2]) - 1.0f;
+	//R[1][0] = 2.0f * (X[1] * X[2] - X[0] * X[3]);
+	//R[1][1] = 2.0f * (X[0] * X[0] + X[2] * X[2]) - 1.0f;
 	R[1][2] = 2.0f * (X[2] * X[3] + X[0] * X[1]);
-	R[2][0] = 2.0f * (X[1] * X[3] + X[0] * X[2]);
-	R[2][1] = 2.0f * (X[2] * X[3] - X[0] * X[1]);
+	//R[2][0] = 2.0f * (X[1] * X[3] + X[0] * X[2]);
+	//R[2][1] = 2.0f * (X[2] * X[3] - X[0] * X[1]);
 	R[2][2] = 2.0f * (X[0] * X[0] + X[3] * X[3]) - 1.0f;
 
 	//roll
-	rpy[0] = atan2(R[1][2], R[2][2]);
+	rpy[0] = FastAtan2(R[1][2], R[2][2]);
 	if (rpy[0] == EKF_PI)
 		rpy[0] = -EKF_PI;
 	//pitch
@@ -387,9 +390,9 @@ void EKF_GetAngle(EKF_Filter* ekf, float32_t* rpy)
 	else if (R[0][2] <= -1.0f)
 		rpy[1] = EKF_HALFPI;
 	else
-		rpy[1] = asin(-R[0][2]);
+		rpy[1] = FastAsin(-R[0][2]);
 	//yaw
-	rpy[2] = atan2(R[0][1], R[0][0]);
+	rpy[2] = FastAtan2(R[0][1], R[0][0]);
 	if (rpy[2] < 0.0f){
 		rpy[2] += EKF_TWOPI;
 	}

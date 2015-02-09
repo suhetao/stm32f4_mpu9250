@@ -73,3 +73,34 @@ arm_status arm_mat_fill_f32(arm_matrix_instance_f32* s, float32_t *pData, uint32
 	} while (pos < blockSize);
 	return ARM_MATH_SUCCESS;
 }
+
+//Returns the lower triangular matrix L in the
+//bottom of A so that L*L' = A.
+arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s, uint32_t n)
+{
+	int i, j, k;
+	int ixn, jxn, jnxk, jnxj;
+	float32_t sum;
+
+	if (s->numRows != s->numCols){
+		return ARM_MATH_LENGTH_ERROR;
+	}
+	for(j = 0; j < n; j++){
+		jxn = j * n;
+		jnxj = jxn + j;
+		for(sum = s->pData[jnxj], k = 0; k < j; k++){
+			jnxk = jxn + k;
+			sum -= s->pData[jnxk] * s->pData[jnxk];
+		}
+		arm_sqrt_f32(sum, &s->pData[jnxj]);
+
+		for(i = j + 1; i < n; i++){
+			ixn = i * n;
+			for(sum = s->pData[ixn + j], k = 0; k < j; k++){
+				sum -= s->pData[ixn + k] * s->pData[jxn + k];
+			}
+			s->pData[ixn + j] = sum / s->pData[jnxj];
+		}
+	}
+	return ARM_MATH_SUCCESS;
+}

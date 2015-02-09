@@ -530,6 +530,11 @@
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\EKF.c</FilePath>
             </File>
+            <File>
+              <FileName>UKF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\UKF.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
