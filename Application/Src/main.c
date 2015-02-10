@@ -32,12 +32,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DEFAULT_MPU_HZ  (200)
 #define GYRO_TORAD(x) (((float32_t)(x)) * 0.00106422515365507901031932363932f)
 
+//uncomment one
 #define USE_EKF
+//#define USE_UKF
+//#define USE_CKF
 
 #ifdef USE_EKF
 #include "EKF.h"
-#else
+#elif defined USE_UKF
 #include "UKF.h"
+#elif defined USE_CKF
+#include "CKF.h"
 #endif
 
 int main(void)
@@ -47,13 +52,13 @@ int main(void)
 	PLL_PARAMS pFreq168M = {12, 336, 2, 7};
 
 	s32 s32Result = 0;
- 	struct int_param_s pInitParam = {0};
+	struct int_param_s pInitParam = {0};
 	u8 u8AccelFsr = 0;
 	u16 u16GyroRate = 0;
 	u16 u16GyroFsr = 0;
 	u16 u16DmpFeatures = DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO |
 		DMP_FEATURE_GYRO_CAL;
-	
+
 	s16 s16Gyro[3] = {0}, s16Accel[3] = {0}, s16Mag[3] = {0};
 	float32_t fRealGyro[3] = {0}, fRealAccel[3] = {0}, fRealMag[3] = {0};
 	float32_t fRealQ[4] = {0};
@@ -62,12 +67,15 @@ int main(void)
 	long lQuat[4] = {0};
 	unsigned long ulTimeStamp = 0;
 	float32_t fRPY[3] = {0};
-	
+
 #ifdef USE_EKF
 	EKF_Filter ekf;
-#else
+#elif defined USE_UKF
 	UKF_Filter ukf;
+#elif defined USE_CKF
+	CKF_Filter ckf;
 #endif
+
 	unsigned long ulNowTime = 0;
 	unsigned long ulLastTime = 0;
 	float32_t fDeltaTime = 0.0f;
@@ -79,12 +87,16 @@ int main(void)
 	RCC_SystemCoreClockUpdate(pFreq120M);
 	Delay_Init();
 	MPU9250_Init();
+
 #ifdef USE_EKF
 	//Create a new EKF object;
 	EKF_New(&ekf);
-#else
+#elif defined USE_UKF
 	//Create a new UKF object;
 	UKF_New(&ukf);
+#elif defined USE_CKF
+	//Create a new CKF object;
+	CKF_New(&ckf);
 #endif
 
 	//////////////////////////////////////////////////////////////////////////
@@ -113,29 +125,33 @@ int main(void)
 	MPU9250_SPIx_SetDivisor(2);
 #endif
 	Interrupt_Init();
-	
+
 	for(;;){
 		if (Interrupt_GetState()){
- 			s32Result = dmp_read_fifo(s16Gyro, s16Accel, lQuat, &ulTimeStamp, &s16Sensors, &u8More);
+			s32Result = dmp_read_fifo(s16Gyro, s16Accel, lQuat, &ulTimeStamp, &s16Sensors, &u8More);
+			if(s32Result < 0){
+				continue;
+			}
 			//because 20Mhz SPI Clock satisfy MPU9250 with read condition
 			//so that you can't use I2C Master mode read/write from SPI at 20Mhz SPI Clock
 			//and dmp fifo can't use for Magnetometer, but you can use this function below
 			s32Result = mpu_get_compass_reg(s16Mag, &ulTimeStamp);
-			
+
 			//must calibrate gryo, accel, magnetic data
+			//ned coordinate system
 			//todo
 			fRealGyro[0] = GYRO_TORAD(s16Gyro[0]);
 			fRealGyro[1] = GYRO_TORAD(s16Gyro[1]);
 			fRealGyro[2] = GYRO_TORAD(s16Gyro[2]);
-			
+
 			fRealAccel[0] = s16Accel[0];
 			fRealAccel[1] = s16Accel[1];
 			fRealAccel[2] = s16Accel[2];
-			
+
 			fRealMag[0] = s16Mag[0];
 			fRealMag[1] = s16Mag[1];
 			fRealMag[2] = s16Mag[2];
-			
+
 			//q30 to float
 			fRealQ[0] = (float32_t)lQuat[0] / 1073741824.0f;
 			fRealQ[1] = (float32_t)lQuat[1] / 1073741824.0f;
@@ -146,8 +162,10 @@ int main(void)
 			if(!u32KFState){
 #ifdef USE_EKF
 				EKF_Init(&ekf, fRealQ, fRealGyro);
-#else
+#elif defined USE_UKF
 				UKF_Init(&ukf, fRealQ, fRealGyro);
+#elif defined USE_CKF
+				CKF_Init(&ckf, fRealQ, fRealGyro);
 #endif
 				ulLastTime = ulNowTime;
 				u32KFState = 1;
@@ -156,19 +174,23 @@ int main(void)
 				fDeltaTime = 0.001f * (float32_t)(ulNowTime - ulLastTime);
 #ifdef USE_EKF
 				EFK_Update(&ekf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
-#else
+#elif defined USE_UKF
 				UKF_Update(&ukf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
+#elif defined USE_CKF
+				CKF_Update(&ckf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
 #endif
 			}
 #ifdef USE_EKF
 			EKF_GetAngle(&ekf, fRPY);
-#else
+#elif defined USE_UKF
 			UKF_GetAngle(&ukf, fRPY);
+#elif defined USE_CKF
+			CKF_GetAngle(&ckf, fRPY);
 #endif
 
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere
-			
+
 			ulLastTime = ulNowTime; 
 		}
 	}

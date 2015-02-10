@@ -30,7 +30,11 @@ void arm_mat_zero_f32(arm_matrix_instance_f32* s);
 arm_status mat_identity(float32_t *pData, uint16_t numRows, uint16_t numCols, float32_t value);
 arm_status arm_mat_identity_f32(arm_matrix_instance_f32* s, float32_t value);
 arm_status arm_mat_fill_f32(arm_matrix_instance_f32* s, float32_t *pData, uint32_t blockSize);
-arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s, uint32_t n);
+arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s);
+arm_status arm_mat_remainlower_f32(arm_matrix_instance_f32* s);
+
+void arm_mat_getsubmatrix_f32(arm_matrix_instance_f32* s, arm_matrix_instance_f32 *a, int row, int col);
+void arm_mat_setsubmatrix_f32(arm_matrix_instance_f32* a, arm_matrix_instance_f32 *s, int row, int col);
 
 __inline void arm_mat_getcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col)
 {

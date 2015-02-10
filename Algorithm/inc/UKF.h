@@ -40,7 +40,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 typedef struct UKF_FILTER_T{
 	//scaling factor
-	float32_t c;
+	float32_t gamma;
 	//weights for means
 	float32_t Wm0, Wmi;
 	//weights for covariance
@@ -65,6 +65,7 @@ typedef struct UKF_FILTER_T{
 	float32_t tmpYSPT_f32[UKF_SP_POINTS * UKF_MEASUREMENT_DIM];
 	//Kalman gain
 	float32_t K_f32[UKF_STATE_DIM * UKF_MEASUREMENT_DIM];
+	float32_t KT_f32[UKF_MEASUREMENT_DIM * UKF_STATE_DIM];
 	//state vector
 	float32_t X_f32[UKF_STATE_DIM];
 	float32_t tmpX_f32[UKF_STATE_DIM];
@@ -92,6 +93,7 @@ typedef struct UKF_FILTER_T{
 	arm_matrix_instance_f32 tmpYSPT;
 	//
 	arm_matrix_instance_f32 K;
+	arm_matrix_instance_f32 KT;
 	//
 	arm_matrix_instance_f32 X;
 	arm_matrix_instance_f32 tmpX;
