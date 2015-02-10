@@ -156,7 +156,7 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	q3 = X[3];
 	
 	//F[0] = 1.0f;
-	F[1] = neghalfdx;
+	F[1] = halfdx;
 	F[2] = halfdy;
 	F[3] = halfdz;
 	F[4] = halfdt * q1;
@@ -174,7 +174,7 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	F[14] = neghalfdy;
 	F[15] = neghalfdz;
 	//F[16] = 1.0f;
-	F[17] = neghalfdx;
+	F[17] = halfdx;
 	F[18] = halfdt * q3;
 	F[19] = neghalfdt * q0;
 	F[20] = neghalfdt * q1;
@@ -187,7 +187,10 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	F[26] = halfdt * q1;
 	F[27] = neghalfdt * q0;
 
-	//Model prediction
+	//model prediction
+	//simple way, pay attention!!!
+	//according to the actual gyroscope output
+	//and coordinate system definition
 	X[0] = q0 + (halfdx * q1 + halfdy * q2 + halfdz * q3);
 	X[1] = q1 - (halfdx * q0 + halfdy * q3 - halfdz * q2);
 	X[2] = q2 + (halfdx * q3 - halfdy * q0 - halfdz * q1);
@@ -208,9 +211,9 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	arm_mat_add_f32(&ekf->P, &ekf->Q, &ekf->tmpP);
 
 	//////////////////////////////////////////////////////////////////////////
-	//Model and measurement differences
+	//model and measurement differences
 	
-	//Normalize Acc and Mag measurements
+	//normalize acc and mag measurements
 	norm = FastInvSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
 	accel[0] *= norm;
 	accel[1] *= norm;

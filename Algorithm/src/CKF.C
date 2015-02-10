@@ -186,6 +186,9 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	tmpQ[2] = tmpX[2];
 	tmpQ[3] = tmpX[3];
 	//model prediction
+	//simple way, pay attention!!!
+	//according to the actual gyroscope output
+	//and coordinate system definition
 	tmpX[0] = tmpQ[0] + (halfdx * tmpQ[1] + halfdy * tmpQ[2] + halfdz * tmpQ[3]);
 	tmpX[1] = tmpQ[1] - (halfdx * tmpQ[0] + halfdy * tmpQ[3] - halfdz * tmpQ[2]);
 	tmpX[2] = tmpQ[2] + (halfdx * tmpQ[3] - halfdy * tmpQ[0] - halfdz * tmpQ[1]);
@@ -219,6 +222,9 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 		tmpQ[2] = tmpX[2];
 		tmpQ[3] = tmpX[3];
 		//model prediction
+		//simple way, pay attention!!!
+		//according to the actual gyroscope output
+		//and coordinate system definition
 		tmpX[0] = tmpQ[0] + (halfdx * tmpQ[1] + halfdy * tmpQ[2] + halfdz * tmpQ[3]);
 		tmpX[1] = tmpQ[1] - (halfdx * tmpQ[0] + halfdy * tmpQ[3] - halfdz * tmpQ[2]);
 		tmpX[2] = tmpQ[2] + (halfdx * tmpQ[3] - halfdy * tmpQ[0] - halfdz * tmpQ[1]);
