@@ -154,7 +154,7 @@ void EKF_IMUInit(float *accel, float *gyro)
 	float accelVector[3] = {0, 0 , 0};
 	float norm;
 	float crossVector[3];
-	float sinw, cosw, sinhalfw, coshalfw;
+	float sinwi, cosw, sinhalfw, coshalfw;
 	float q[4];
 
 	//unit accel
@@ -167,23 +167,21 @@ void EKF_IMUInit(float *accel, float *gyro)
 	crossVector[0] = accelVector[1] * nedVector[2] - accelVector[2] * nedVector[1];
 	crossVector[1] = accelVector[2] * nedVector[0] - accelVector[0] * nedVector[2];
 	crossVector[2] = accelVector[0] * nedVector[1] - accelVector[1] * nedVector[0];
+	sinwi = FastInvSqrt(crossVector[0] * crossVector[0] + crossVector[1] * crossVector[1] + crossVector[2] * crossVector[2]);
 
 	//the angle between accel and reference is the dot product of the two vectors
 	cosw = accelVector[0] * crossVector[0] + accelVector[1] * crossVector[1] + accelVector[2] * crossVector[2];
 	coshalfw = FastSqrt(0.5f + 0.5f * cosw);
 	sinhalfw = FastSqrt(0.5f - 0.5f * cosw);
 
-	sinw = FastInvSqrt(crossVector[0] * crossVector[0] + crossVector[1] * crossVector[1] + crossVector[2] * crossVector[2]);
-
-	//must verify the quaternion is valid
-	/*todo
-
-	*/
 	q[0] = coshalfw;
-	q[1] = crossVector[0] * sinhalfw * sinw;
-	q[2] = crossVector[1] * sinhalfw * sinw;
-	q[3] = crossVector[2] * sinhalfw * sinw;
-
+	q[1] = crossVector[0] * sinhalfw * sinwi;
+	q[2] = crossVector[1] * sinhalfw * sinwi;
+	q[3] = crossVector[2] * sinhalfw * sinwi;
+	//must verify the quaternion is valid
+	/*
+		todo
+	*/
 
 	X[0] = q[0];
 	X[1] = q[1];
@@ -191,8 +189,8 @@ void EKF_IMUInit(float *accel, float *gyro)
 	X[3] = q[3];
 #if EKF_STATE_DIM == 7
 	X[4] = gyro[0];
-	X[5] = gyro[0];
-	X[6] = gyro[0];
+	X[5] = gyro[1];
+	X[6] = gyro[2];
 #endif
 }
 
@@ -245,7 +243,6 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	F[8] = halfdy;	F[9] = halfdz;	/* F[10] = 1.0f; */ F[11] = neghalfdx;
 	F[12] = halfdz; F[13] = neghalfdy; F[14] = halfdx; /* F[15] = 1.0f; */
 #else
-	//
 	/* F[0] = 1.0f; */ F[1] = neghalfdx; F[2] = neghalfdy; F[3] = neghalfdz;
 	F[4] = neghalfdtq1; F[5] = neghalfdtq2; F[6] = neghalfdtq3;
 	F[7] = halfdx; /* F[8] = 1.0f; */ F[9] = neghalfdz;	F[10] = halfdy;
@@ -259,7 +256,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//////////////////////////////////////////////////////////////////////////
 	//time update
 	//state time propagation
-	//X = f(X) = Q + dQ
+	//X = f(X)
 	X[0] = q0 - (halfdx * q1 + halfdy * q2 + halfdz * q3);
 	X[1] = q1 + (halfdx * q0 + halfdy * q3 - halfdz * q2);
 	X[2] = q2 - (halfdx * q3 - halfdy * q0 - halfdz * q1);
@@ -283,7 +280,6 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//measurement update
 	//kalman gain calculation
 	//K = P * H' / (R + H * P * H')
-
 	_2q0 = 2.0f * X[0];
 	_2q1 = 2.0f * X[1];
 	_2q2 = 2.0f * X[2];
@@ -307,7 +303,6 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 
 	//state measurement update
 	//X = X + K * Y;
-
 	Y[0] = 2.0f * (X[1] * X[3] - X[0] * X[2]);
 	Y[1] = 2.0f * (X[2] * X[3] + X[0] * X[1]);
 	Y[2] = -1.0f + 2.0f * (X[0] * X[0] + X[3] * X[3]);

@@ -36,7 +36,7 @@ by default is "define EKF_STATE_DIM 4"
 using the struct as below,In the main loop of the program
 
 if EKF is not initialization
-	EKF_IMUInit(float *accel);
+	EKF_IMUInit(accel);
 else:
 	EFK_IMUUpdate(gyro, accel, dt);
 //
