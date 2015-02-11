@@ -10,3 +10,6 @@ feature
 prediction state: q0 q1 q2 q3 wx wy wz
 
 mesurement:q0 q1 q2 q3 ax ay az wx wy wz mx my mzv (q0~q3 from dmp ouput)
+
+Add a miniIMU for doctor's miniQuadrotor
+please check the miniIMU directory at the root and look the usage.txt for using!
