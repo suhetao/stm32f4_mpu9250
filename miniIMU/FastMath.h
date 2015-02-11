@@ -52,32 +52,6 @@ typedef union {
 	float f;
 }Long2Float;
 
-//S10.22
-int FP_FastSqrtI(int number)
-{
-	long x;
-	unsigned int y_1;
-	unsigned int f = 0x600000;
-	Long2Float flt, flt2;
-	flt.f = number;
-
-	x = number << 15;
-	flt.i = 0x5f3759df - ( flt.i >> 1 );
-
-	flt2.f = flt.f + 2.0;
-	flt2.i &= 0x7FFFFF;
-	y_1 = (flt2.i >> 11) * (flt2.i >> 11);
-	y_1 = (y_1 >> 8) * (x >> 8);
-	y_1 = f - y_1;
-	flt2.i = (flt2.i >> 11) * (y_1 >> 11);
-	if (x < 171){
-		y_1 = (flt2.i >> 11) * (flt2.i >> 11);
-		y_1 = (y_1 >> 8) * (x >> 8);
-		y_1 = f - y_1;
-		flt2.i = (flt2.i >> 11) * (y_1 >> 11);
-	}
-	return (number * flt2.i + 0x1e3c68) >> 22;
-}
 
 __inline float FastInvSqrt(float x)
 {
