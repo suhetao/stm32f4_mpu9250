@@ -51,9 +51,9 @@ void CKF_New(CKF_Filter* ukf)
 	float32_t KesiPuls_f32[CKF_STATE_DIM * CKF_STATE_DIM],
 		KesiMinus_f32[CKF_STATE_DIM * CKF_STATE_DIM];
 
+	arm_sqrt_f32(kesi, &kesi);
 	arm_mat_init_f32(&KesiPuls, CKF_STATE_DIM, CKF_STATE_DIM, KesiPuls_f32);
 	arm_mat_init_f32(&KesiMinu, CKF_STATE_DIM, CKF_STATE_DIM, KesiMinus_f32);
-	arm_sqrt_f32(kesi, &kesi);
 	arm_mat_identity_f32(&KesiPuls, kesi);
 	arm_mat_identity_f32(&KesiMinu, -kesi);
 	arm_mat_init_f32(&ukf->Kesi, CKF_STATE_DIM, CKF_CP_POINTS, ukf->Kesi_f32);
