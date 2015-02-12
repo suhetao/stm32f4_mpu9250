@@ -34,10 +34,13 @@ by default is "define EKF_STATE_DIM 4"
 //setp 2:
 //
 using the struct as below,In the main loop of the program
-
+......
 if EKF is not initialization
 	EKF_IMUInit(accel);
-else:
+else
 	EFK_IMUUpdate(gyro, accel, dt);
-//
+......
+EKF_IMUGetAngle(rpy);
+
+
 Enjoy it!
