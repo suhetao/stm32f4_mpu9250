@@ -361,18 +361,18 @@ void EKF_IMUGetAngle(float* rpy)
 	if (rpy[0] == EKF_PI)
 		rpy[0] = -EKF_PI;
 	//pitch
-	if (R[2] >= 1.0f)
+	if (CBn[2] >= 1.0f)
 		rpy[1] = -EKF_HALFPI;
-	else if (R[2] <= -1.0f)
+	else if (CBn[2] <= -1.0f)
 		rpy[1] = EKF_HALFPI;
 	else
-		rpy[1] = FastAsin(-R[2]);
+		rpy[1] = FastAsin(-CBn[2]);
 	//yaw
-	rpy[2] = FastAtan2(CBn[5], CBn[8]);
+	rpy[2] = FastAtan2(CBn[1], CBn[0]);
 	if (rpy[2] < 0.0f){
 		rpy[2] += EKF_TWOPI;
 	}
-	if (rpy[2] > EKF_TWOPI){
+	if (rpy[2] >= EKF_TWOPI){
 		rpy[2] = 0.0f;
 	}
 
