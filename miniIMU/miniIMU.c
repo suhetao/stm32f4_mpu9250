@@ -143,11 +143,7 @@ static float HT[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 static float S[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
 static float SI[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
 
-#if EKF_STATE_DIM == 4
-void EKF_IMUInit(float *accel)
-#else //EKF_STATE_DIM == 7
 void EKF_IMUInit(float *accel, float *gyro)
-#endif
 {
 	//NED coordinate system unit vector
 	float nedVector[3] = {0, 0 , 1.0f};
@@ -159,9 +155,9 @@ void EKF_IMUInit(float *accel, float *gyro)
 
 	//unit accel
 	norm = FastInvSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
-	accelVector[0] *= norm;
-	accelVector[1] *= norm;
-	accelVector[2] *= norm;
+	accelVector[0] = accel[0] * norm;
+	accelVector[1] = accel[1] * norm;
+	accelVector[2] = accel[2] * norm;
 
 	//cross product between accel and reference
 	crossVector[0] = accelVector[1] * nedVector[2] - accelVector[2] * nedVector[1];
@@ -197,11 +193,11 @@ void EKF_IMUInit(float *accel, float *gyro)
 void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 {
 	float norm;
-	float h[EKF_MEASUREMENT_DIM];
-
 	float halfdx, halfdy, halfdz;
 	float neghalfdx, neghalfdy, neghalfdz;
+#if FP_EKF_STATE_DIM == 7
 	float halfdtq0, halfdtq1, neghalfdtq1, halfdtq2, neghalfdtq2, halfdtq3, neghalfdtq3;
+#endif
 	float halfdt = 0.5f * dt;
 	//////////////////////////////////////////////////////////////////////////
 	float _2q0,_2q1,_2q2,_2q3;
@@ -229,6 +225,12 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	q2 = X[2];
 	q3 = X[3];
 
+#if EKF_STATE_DIM == 4
+	/* F[0] = 1.0f; */ F[1] = neghalfdx; F[2] = neghalfdy; F[3] = neghalfdz;
+	F[4] = halfdx; /* F[5] = 1.0f; */ F[6] = neghalfdz;	F[7] = halfdy;
+	F[8] = halfdy;	F[9] = halfdz;	/* F[10] = 1.0f; */ F[11] = neghalfdx;
+	F[12] = halfdz; F[13] = neghalfdy; F[14] = halfdx; /* F[15] = 1.0f; */
+#else
 	halfdtq0 = halfdt * q0;
 	halfdtq1 = halfdt * q1;
 	neghalfdtq1 = -halfdtq1;
@@ -237,12 +239,6 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	halfdtq3 = halfdt * q3;
 	neghalfdtq3 = -halfdtq3;
 
-#if EKF_STATE_DIM == 4
-	/* F[0] = 1.0f; */ F[1] = neghalfdx; F[2] = neghalfdy; F[3] = neghalfdz;
-	F[4] = halfdx; /* F[5] = 1.0f; */ F[6] = neghalfdz;	F[7] = halfdy;
-	F[8] = halfdy;	F[9] = halfdz;	/* F[10] = 1.0f; */ F[11] = neghalfdx;
-	F[12] = halfdz; F[13] = neghalfdy; F[14] = halfdx; /* F[15] = 1.0f; */
-#else
 	/* F[0] = 1.0f; */ F[1] = neghalfdx; F[2] = neghalfdy; F[3] = neghalfdz;
 	F[4] = neghalfdtq1; F[5] = neghalfdtq2; F[6] = neghalfdtq3;
 	F[7] = halfdx; /* F[8] = 1.0f; */ F[9] = neghalfdz;	F[10] = halfdy;
@@ -319,7 +315,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	accel[2] *= norm;
 
 	Y[0] = accel[0] - Y[0];
-	Y[1] = accel[1] - h[1];
+	Y[1] = accel[1] - Y[1];
 	Y[2] = accel[2] - Y[2];
 #if EKF_STATE_DIM == 7
 	Y[3] = gyro[0] - Y[3];
@@ -346,15 +342,17 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 
 void EKF_IMUGetAngle(float* rpy)
 {
-	CBn[0] = 2.0f * (X[0] * X[0] + X[1] * X[1]) - 1.0f;
+	float q0q0 = X[0] * X[0];
+
+	CBn[0] = 2.0f * (q0q0 + X[1] * X[1]) - 1.0f;
 	CBn[1] = 2.0f * (X[1] * X[2] + X[0] * X[3]);
 	CBn[2] = 2.0f * (X[1] * X[3] - X[0] * X[2]);
 	//CBn[3] = 2.0f * (X[1] * X[2] - X[0] * X[3]);
-	//CBn[4] = 2.0f * (X[0] * X[0] + X[2] * X[2]) - 1.0f;
+	//CBn[4] = 2.0f * (q0q0 + X[2] * X[2]) - 1.0f;
 	CBn[5] = 2.0f * (X[2] * X[3] + X[0] * X[1]);
 	//CBn[6] = 2.0f * (X[1] * X[3] + X[0] * X[2]);
 	//CBn[7] = 2.0f * (X[2] * X[3] - X[0] * X[1]);
-	CBn[8] = 2.0f * (X[0] * X[0] + X[3] * X[3]) - 1.0f;
+	CBn[8] = 2.0f * (q0q0 + X[3] * X[3]) - 1.0f;
 
 	//roll
 	rpy[0] = FastAtan2(CBn[5], CBn[8]);

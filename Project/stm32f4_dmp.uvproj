@@ -362,14 +362,14 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER STM32F40_41xxx ARM_MATH_CM4 __FPU_PRESENT MPU9250</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Application\Include;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc</IncludePath>
+              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Application\Include;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc;..\miniIMU\FP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
             <interw>1</interw>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <thumb>0</thumb>
+            <thumb>1</thumb>
             <SplitLS>0</SplitLS>
             <SwStkChk>0</SwStkChk>
             <NoWarn>0</NoWarn>
@@ -434,6 +434,11 @@
               <FileName>stm32f4_rcc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Application\Src\stm32f4_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>miniIMU.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\miniIMU.c</FilePath>
             </File>
           </Files>
         </Group>

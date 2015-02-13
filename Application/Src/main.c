@@ -30,7 +30,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "inv_mpu_dmp_motion_driver.h"
 
 #define DEFAULT_MPU_HZ  (200)
-#define GYRO_TORAD(x) (((float32_t)(x)) * 0.00106422515365507901031932363932f)
+#define GYRO_TORAD(x) (((float)(x)) * 0.00106422515365507901031932363932f)
 
 //uncomment one
 #define USE_EKF
@@ -60,13 +60,13 @@ int main(void)
 		DMP_FEATURE_GYRO_CAL;
 
 	s16 s16Gyro[3] = {0}, s16Accel[3] = {0}, s16Mag[3] = {0};
-	float32_t fRealGyro[3] = {0}, fRealAccel[3] = {0}, fRealMag[3] = {0};
-	float32_t fRealQ[4] = {0};
+	float fRealGyro[3] = {0}, fRealAccel[3] = {0}, fRealMag[3] = {0};
+	float fRealQ[4] = {0};
 	s16 s16Sensors = 0;
 	u8 u8More = 0;
 	long lQuat[4] = {0};
 	unsigned long ulTimeStamp = 0;
-	float32_t fRPY[3] = {0};
+	float fRPY[3] = {0};
 
 #ifdef USE_EKF
 	EKF_Filter ekf;
@@ -78,9 +78,9 @@ int main(void)
 
 	unsigned long ulNowTime = 0;
 	unsigned long ulLastTime = 0;
-	float32_t fDeltaTime = 0.0f;
+	float fDeltaTime = 0.0f;
 	u32 u32KFState = 0;
-
+		
 	//Reduced frequency
 	//120 / 4 = 30Mhz APB1, 30/32 = 0.9375 MHz SPI Clock
 	//1Mhz SPI Clock for read/write
@@ -153,10 +153,10 @@ int main(void)
 			fRealMag[2] = s16Mag[2];
 
 			//q30 to float
-			fRealQ[0] = (float32_t)lQuat[0] / 1073741824.0f;
-			fRealQ[1] = (float32_t)lQuat[1] / 1073741824.0f;
-			fRealQ[2] = (float32_t)lQuat[2] / 1073741824.0f;
-			fRealQ[3] = (float32_t)lQuat[3] / 1073741824.0f;
+			fRealQ[0] = (float)lQuat[0] / 1073741824.0f;
+			fRealQ[1] = (float)lQuat[1] / 1073741824.0f;
+			fRealQ[2] = (float)lQuat[2] / 1073741824.0f;
+			fRealQ[3] = (float)lQuat[3] / 1073741824.0f;
 			////
 			Get_Ms(&ulNowTime);
 			if(!u32KFState){
@@ -171,7 +171,7 @@ int main(void)
 				u32KFState = 1;
 			}
 			else{
-				fDeltaTime = 0.001f * (float32_t)(ulNowTime - ulLastTime);
+				fDeltaTime = 0.001f * (float)(ulNowTime - ulLastTime);
 #ifdef USE_EKF
 				EFK_Update(&ekf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
 #elif defined USE_UKF
@@ -187,7 +187,6 @@ int main(void)
 #elif defined USE_CKF
 			CKF_GetAngle(&ckf, fRPY);
 #endif
-
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere
 

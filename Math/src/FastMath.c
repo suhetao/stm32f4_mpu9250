@@ -38,7 +38,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LN2_DC2 (-2.121944400e-4f)
 #define LN2_DC3 (-5.46905827678e-14f)
 
-float32_t FastLn(float32_t x)
+__inline float32_t FastLn(float32_t x)
 {
 	Int2Float e;	
 	float32_t xn;
@@ -99,7 +99,7 @@ float32_t FastLn(float32_t x)
 #define ASINQ_COEF1 (+2.4864728969164e+1F)
 #define ASINQ_COEF2 (-1.0333867072113e+1F)
 
-float32_t FastAsin(float32_t x)
+__inline float32_t FastAsin(float32_t x)
 {
     float32_t y, g;
     float32_t num, den, result;
@@ -146,7 +146,7 @@ float32_t FastAsin(float32_t x)
     return result;
 }
 
-float32_t FastAtan2(float32_t y, float32_t x)
+__inline float32_t FastAtan2(float32_t y, float32_t x)
 {
 	float32_t f, g;
 	float32_t num, den;
