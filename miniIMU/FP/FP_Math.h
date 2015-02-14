@@ -41,7 +41,7 @@ typedef union {
 
 //////////////////////////////////////////////////////////////////////////
 //S16.16
-__inline Q16 FT2Q16(float f)
+__inline Q16 FT_Q16(float f)
 {
 	Long2Float l2f;
 	int ival;
@@ -59,6 +59,11 @@ __inline Q16 FT2Q16(float f)
 		ival = -ival;
 	}
 	return ival;
+}
+
+__inline float Q16_FT(Q16 x)
+{
+	return ((float)x) / 65536.0f;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -145,8 +150,8 @@ __inline Q16 FP_SMUL(Q16 a, Q16 b)
 	int __al, __ah, __r;
 	__asm{
 		smull __al, __ah, a, b;
-		lsrs __al, __al, #16;
-		orr __r, __al, __ah, lsl #16;
+		lsls __ah, __ah, #16;
+		orr __r, __ah, __al, lsr #16;
 	}
 	return __r;
 }
@@ -155,9 +160,9 @@ __inline Q16 FP_UMUL(Q16 a, Q16 b)
 {
 	int __al, __ah, __r;
 	__asm{
-		umull __al, __ah, a, b
-		lsrs __al, __al, #16
-		orr __r, __al, __ah, lsl #16
+		umull __al, __ah, a, b;
+		lsls __ah, __ah, #16;
+		orr __r, __ah, __al, lsr #16;
 	}
 	return __r;
 }

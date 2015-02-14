@@ -170,8 +170,8 @@ __inline int FP_Maxtrix_Mul(Q16 *pSrcA, unsigned short numRowsA, unsigned short 
 			//cortex-m3's instruction assembly optimization
 			//*px++ = sum;
 			__asm{
-				lsrs __al, __al, #16;
-				orr *px++, __al, __ah, lsl #16;
+				lsls __ah, __ah, #16;
+				orr *px++, __ah, __al, lsr #16;
 			}
 			col--;
 			pIn2 = pInB + (numColsB - col);

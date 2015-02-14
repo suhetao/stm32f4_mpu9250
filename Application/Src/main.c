@@ -33,7 +33,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GYRO_TORAD(x) (((float)(x)) * 0.00106422515365507901031932363932f)
 
 //uncomment one
-#define USE_EKF
+//#define USE_6AXIS_EKF
+#define USE_6AXIS_FP_EKF
+//#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
 
@@ -43,7 +45,53 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "UKF.h"
 #elif defined USE_CKF
 #include "CKF.h"
+#elif defined USE_6AXIS_EKF
+#include "miniIMU.h"
+#elif defined USE_6AXIS_FP_EKF
+#include "FP_miniIMU.h"
 #endif
+
+static s8 gyro_orientation[9] = {
+	-1, 0, 0,
+	0,-1, 0,
+	0, 0, 1
+};
+
+static __inline unsigned short inv_row_2_scale(const signed char *row)
+{
+    unsigned short b;
+    if (row[0] > 0)
+        b = 0;
+    else if (row[0] < 0)
+        b = 4;
+    else if (row[1] > 0)
+        b = 1;
+    else if (row[1] < 0)
+        b = 5;
+    else if (row[2] > 0)
+        b = 2;
+    else if (row[2] < 0)
+        b = 6;
+    else
+        b = 7;      // error
+    return b;
+}
+
+static __inline unsigned short inv_orientation_matrix_to_scalar(const signed char *mtx){
+    unsigned short scalar;
+    /*
+       XYZ  010_001_000 Identity Matrix
+       XZY  001_010_000
+       YXZ  010_000_001
+       YZX  000_010_001
+       ZXY  001_000_010
+       ZYX  000_001_010
+     */
+    scalar = inv_row_2_scale(mtx);
+    scalar |= inv_row_2_scale(mtx + 3) << 3;
+    scalar |= inv_row_2_scale(mtx + 6) << 6;
+    return scalar;
+}
 
 int main(void)
 {
@@ -80,7 +128,7 @@ int main(void)
 	unsigned long ulLastTime = 0;
 	float fDeltaTime = 0.0f;
 	u32 u32KFState = 0;
-		
+
 	//Reduced frequency
 	//120 / 4 = 30Mhz APB1, 30/32 = 0.9375 MHz SPI Clock
 	//1Mhz SPI Clock for read/write
@@ -109,6 +157,9 @@ int main(void)
 	s32Result = mpu_get_gyro_fsr(&u16GyroFsr);
 	s32Result = mpu_get_accel_fsr(&u8AccelFsr);
 	s32Result = dmp_load_motion_driver_firmware();
+	//
+	s32Result = dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation));
+	//
 	s32Result = dmp_enable_feature(u16DmpFeatures);
 	s32Result = dmp_set_fifo_rate(DEFAULT_MPU_HZ);
 	s32Result = mpu_set_dmp_state(1);
@@ -166,7 +217,11 @@ int main(void)
 				UKF_Init(&ukf, fRealQ, fRealGyro);
 #elif defined USE_CKF
 				CKF_Init(&ckf, fRealQ, fRealGyro);
-#endif
+#elif defined USE_6AXIS_EKF
+				EKF_IMUInit(fRealAccel, fRealGyro);
+#elif defined USE_6AXIS_FP_EKF
+				FP_EKF_IMUInit(fRealAccel, fRealGyro);
+#endif				
 				ulLastTime = ulNowTime;
 				u32KFState = 1;
 			}
@@ -178,15 +233,25 @@ int main(void)
 				UKF_Update(&ukf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
 #elif defined USE_CKF
 				CKF_Update(&ckf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
-#endif
+#elif defined USE_6AXIS_EKF
+				EKF_IMUUpdate(fRealGyro, fRealAccel, fDeltaTime);
+#elif defined USE_6AXIS_FP_EKF
+				FP_EKF_IMUUpdate(fRealGyro, fRealAccel, fDeltaTime);
+#endif	
 			}
+			
 #ifdef USE_EKF
 			EKF_GetAngle(&ekf, fRPY);
 #elif defined USE_UKF
 			UKF_GetAngle(&ukf, fRPY);
 #elif defined USE_CKF
 			CKF_GetAngle(&ckf, fRPY);
-#endif			
+#elif defined USE_6AXIS_EKF
+			EKF_IMUGetAngle(fRPY);
+#elif defined USE_6AXIS_FP_EKF
+			FP_EKF_IMUGetAngle(fRPY);
+#endif	
+			
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere
 

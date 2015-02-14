@@ -146,7 +146,7 @@ static Q16 SI[FP_EKF_MEASUREMENT_DIM * FP_EKF_MEASUREMENT_DIM];
 void FP_EKF_IMUInit(float *accel, float *gyro)
 {
 	//NED coordinate system unit vector
-	float nedVector[3] = {0, 0 , Q16_One};
+	float nedVector[3] = {0, 0 , 1.0f};
 	float accelVector[3] = {0, 0 , 0};
 	float norm;
 	float crossVector[3];
@@ -164,29 +164,32 @@ void FP_EKF_IMUInit(float *accel, float *gyro)
 	crossVector[1] = accelVector[2] * nedVector[0] - accelVector[0] * nedVector[2];
 	crossVector[2] = accelVector[0] * nedVector[1] - accelVector[1] * nedVector[0];
 	sinwi = FastSqrtI(crossVector[0] * crossVector[0] + crossVector[1] * crossVector[1] + crossVector[2] * crossVector[2]);
+	crossVector[0] *= sinwi;
+	crossVector[1] *= sinwi;
+	crossVector[2] *= sinwi;
 
 	//the angle between accel and reference is the dot product of the two vectors
-	cosw = accelVector[0] * crossVector[0] + accelVector[1] * crossVector[1] + accelVector[2] * crossVector[2];
+	cosw = accelVector[0] * nedVector[0] + accelVector[1] * nedVector[1] + accelVector[2] * nedVector[2];
 	coshalfw = FastSqrt(0.5f + 0.5f * cosw);
 	sinhalfw = FastSqrt(0.5f - 0.5f * cosw);
 
 	q[0] = coshalfw;
-	q[1] = crossVector[0] * sinwi * sinhalfw;
-	q[2] = crossVector[1] * sinwi * sinhalfw;
-	q[3] = crossVector[2] * sinwi * sinhalfw;
+	q[1] = crossVector[0] * sinhalfw;
+	q[2] = crossVector[1] * sinhalfw;
+	q[3] = crossVector[2] * sinhalfw;
 	//must verify the quaternion is valid
 	/*
 		todo
 	*/
 
-	X[0] = FT2Q16(q[0]);
-	X[1] = FT2Q16(q[1]);
-	X[2] = FT2Q16(q[2]);
-	X[3] = FT2Q16(q[3]);
+	X[0] = FT_Q16(q[0]);
+	X[1] = FT_Q16(q[1]);
+	X[2] = FT_Q16(q[2]);
+	X[3] = FT_Q16(q[3]);
 #if FP_EKF_STATE_DIM == 7
-	X[4] = FT2Q16(gyro[0]);
-	X[5] = FT2Q16(gyro[1]);
-	X[6] = FT2Q16(gyro[2]);
+	X[4] = FT_Q16(gyro[0]);
+	X[5] = FT_Q16(gyro[1]);
+	X[6] = FT_Q16(gyro[2]);
 #endif
 }
 
@@ -197,15 +200,15 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 #if FP_EKF_STATE_DIM == 7
 	Q16 halfdtq0, halfdtq1, neghalfdtq1, halfdtq2, neghalfdtq2, halfdtq3, neghalfdtq3;
 #endif
-	Q16 halfdt = FP_SMUL(32768, FT2Q16(dt));
+	Q16 halfdt = FP_SMUL(32768, FT_Q16(dt));
 	//////////////////////////////////////////////////////////////////////////
 	Q16 _2q0,_2q1,_2q2,_2q3;
 	Q16 q0, q1, q2, q3;
 	//////////////////////////////////////////////////////////////////////////
 	int __al, __ah;
-	Q16 gx = FT2Q16(gyro[0]);
-	Q16 gy = FT2Q16(gyro[1]);
-	Q16 gz = FT2Q16(gyro[2]);
+	Q16 gx = FT_Q16(gyro[0]);
+	Q16 gy = FT_Q16(gyro[1]);
+	Q16 gz = FT_Q16(gyro[2]);
 	//
 	//////////////////////////////////////////////////////////////////////////
 	float norm;
@@ -276,32 +279,32 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 		smlal __al, __ah, neghalfdx, q1;
 		smlal __al, __ah, neghalfdy, q2;
 		smlal __al, __ah, neghalfdz, q3;
-		lsrs __al, __al, #16;
-		orr X[0], __al, __ah, lsl #16;
+		lsls __ah, __ah, #16;
+		orr X[0], __ah, __al, lsr #16;
 		adds X[0], q0, X[0];
 
 		mov __al, #0;mov __ah, #0;
 		smlal __al, __ah, halfdx, q0;
 		smlal __al, __ah, halfdy, q3;
 		smlal __al, __ah, neghalfdz, q2;
-		lsrs __al, __al, #16;
-		orr X[1], __al, __ah, lsl #16;
+		lsls __ah, __ah, #16;
+		orr X[1], __ah, __al, lsr #16;
 		adds X[1], q1, X[1];
 
 		mov __al, #0;mov __ah, #0;
 		smlal __al, __ah, neghalfdx, q3;
 		smlal __al, __ah, neghalfdy, q0;
 		smlal __al, __ah, neghalfdz, q1;
-		lsrs __al, __al, #16;
-		orr X[2], __al, __ah, lsl #16;
+		lsls __ah, __ah, #16;
+		orr X[2], __ah, __al, lsr #16;
 		adds X[2], q2, X[2];
 
 		mov __al, #0;mov __ah, #0;
 		smlal __al, __ah, halfdx, q2;
 		smlal __al, __ah, neghalfdy, q1;
 		smlal __al, __ah, halfdz, q0;
-		lsrs __al, __al, #16;
-		orr X[3], __al, __ah, lsl #16;
+		lsls __ah, __ah, #16;
+		orr X[3], __ah, __al, lsr #16;
 		adds X[3], q3, X[3];
 		//////////////////////////////////////////////////////////////////////////
 		mov __al, #0;mov __ah, #0;
@@ -309,11 +312,10 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 		smlal __al, __ah, X[1], X[1];
 		smlal __al, __ah, X[2], X[2];
 		smlal __al, __ah, X[3], X[3];
-		lsrs __al, __al, #16;
-		orr qNorm, __al, __ah, lsl #16;
+		lsls __ah, __ah, #16;
+		orr qNorm, __ah, __al, lsr #16;
 	}
-	norm = FastSqrtI(qNorm);
-	qNorm = FT2Q16(norm);
+	qNorm = FP_SqrtI(qNorm, PRECISION);
 	X[0] = FP_SMUL(X[0], qNorm);
 	X[1] = FP_SMUL(X[1], qNorm);
 	X[2] = FP_SMUL(X[2], qNorm);
@@ -368,9 +370,9 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	accel[1] *= norm;
 	accel[2] *= norm;
 
-	Y[0] = FT2Q16(accel[0]) - Y[0];
-	Y[1] = FT2Q16(accel[1]) - Y[1];
-	Y[2] = FT2Q16(accel[2]) - Y[2];
+	Y[0] = FT_Q16(accel[0]) - Y[0];
+	Y[1] = FT_Q16(accel[1]) - Y[1];
+	Y[2] = FT_Q16(accel[2]) - Y[2];
 #if FP_EKF_STATE_DIM == 7
 	Y[3] = gx - Y[3];
 	Y[4] = gy - Y[4];
@@ -380,11 +382,26 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	FP_Maxtrix_Add(X, FP_EKF_STATE_DIM, 1, X, KY);
 
 	//normalize quaternion
-	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
-	X[0] *= norm;
-	X[1] *= norm;
-	X[2] *= norm;
-	X[3] *= norm;
+	//norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	//X[0] *= norm;
+	//X[1] *= norm;
+	//X[2] *= norm;
+	//X[3] *= norm;
+	//cortex-m3's instruction assembly optimization
+	__asm{
+		mov __al, #0;mov __ah, #0;
+		smlal __al, __ah, X[0], X[0];
+		smlal __al, __ah, X[1], X[1];
+		smlal __al, __ah, X[2], X[2];
+		smlal __al, __ah, X[3], X[3];
+		lsls __ah, __ah, #16;
+		orr qNorm, __ah, __al, lsr #16;
+	}
+	qNorm = FP_SqrtI(qNorm, PRECISION);
+	X[0] = FP_SMUL(X[0], qNorm);
+	X[1] = FP_SMUL(X[1], qNorm);
+	X[2] = FP_SMUL(X[2], qNorm);
+	X[3] = FP_SMUL(X[3], qNorm);
 
 	//covariance measurement update
 	//P = (I - K * H) * P
@@ -409,18 +426,18 @@ void FP_EKF_IMUGetAngle(float* rpy)
 	CBn[8] = ((q0q0 + FP_SMUL(X[3], X[3])) << 1) - Q16_One;
 
 	//roll
-	rpy[0] = FastAtan2(CBn[5], CBn[8]);
+	rpy[0] = FastAtan2(Q16_FT(CBn[5]), Q16_FT(CBn[8]));
 	if (rpy[0] == EKF_PI)
 		rpy[0] = -EKF_PI;
 	//pitch
-	if (CBn[2] >= 1.0f)
+	if (CBn[2] >= Q16_One)
 		rpy[1] = -EKF_HALFPI;
-	else if (CBn[2] <= -1.0f)
+	else if (CBn[2] <= -Q16_One)
 		rpy[1] = EKF_HALFPI;
 	else
-		rpy[1] = FastAsin(-CBn[2]);
+		rpy[1] = FastAsin(Q16_FT(-CBn[2]));
 	//yaw
-	rpy[2] = FastAtan2(CBn[1], CBn[0]);
+	rpy[2] = FastAtan2(Q16_FT(CBn[1]), Q16_FT(CBn[0]));
 	if (rpy[2] < 0.0f){
 		rpy[2] += EKF_TWOPI;
 	}
