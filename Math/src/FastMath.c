@@ -99,7 +99,7 @@ __inline float32_t FastLn(float32_t x)
 #define ASINQ_COEF1 (+2.4864728969164e+1F)
 #define ASINQ_COEF2 (-1.0333867072113e+1F)
 
-__inline float32_t FastAsin(float32_t x)
+float32_t FastAsin(float32_t x)
 {
     float32_t y, g;
     float32_t num, den, result;
@@ -146,7 +146,7 @@ __inline float32_t FastAsin(float32_t x)
     return result;
 }
 
-__inline float32_t FastAtan2(float32_t y, float32_t x)
+float32_t FastAtan2(float32_t y, float32_t x)
 {
 	float32_t f, g;
 	float32_t num, den;

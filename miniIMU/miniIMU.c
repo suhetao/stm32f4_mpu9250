@@ -28,9 +28,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //////////////////////////////////////////////////////////////////////////
 //
 //all parameters below need to be tune
-#define EKF_PQ_INITIAL 0.000001
-#define EKF_QQ_INITIAL 0.001
-#define EKF_RA_INITIAL 0.07
+#define EKF_PQ_INITIAL 0.000125
+#define EKF_QQ_INITIAL 0.0001
+#define EKF_RA_INITIAL 0.0025
 
 #if EKF_STATE_DIM == 4
 #define EKF_MEASUREMENT_DIM 3
@@ -164,20 +164,19 @@ void EKF_IMUInit(float *accel, float *gyro)
 	crossVector[1] = accelVector[2] * nedVector[0] - accelVector[0] * nedVector[2];
 	crossVector[2] = accelVector[0] * nedVector[1] - accelVector[1] * nedVector[0];
 	sinwi = FastInvSqrt(crossVector[0] * crossVector[0] + crossVector[1] * crossVector[1] + crossVector[2] * crossVector[2]);
+	crossVector[0] *= sinwi;
+	crossVector[1] *= sinwi;
+	crossVector[2] *= sinwi;
 
 	//the angle between accel and reference is the dot product of the two vectors
-	cosw = accelVector[0] * crossVector[0] + accelVector[1] * crossVector[1] + accelVector[2] * crossVector[2];
+	cosw = accelVector[0] * nedVector[0] + accelVector[1] * nedVector[1] + accelVector[2] * nedVector[2];
 	coshalfw = FastSqrt(0.5f + 0.5f * cosw);
 	sinhalfw = FastSqrt(0.5f - 0.5f * cosw);
 
 	q[0] = coshalfw;
-	q[1] = crossVector[0] * sinhalfw * sinwi;
-	q[2] = crossVector[1] * sinhalfw * sinwi;
-	q[3] = crossVector[2] * sinhalfw * sinwi;
-	//must verify the quaternion is valid
-	/*
-		todo
-	*/
+	q[1] = crossVector[0] * sinhalfw;
+	q[2] = crossVector[1] * sinhalfw;
+	q[3] = crossVector[2] * sinhalfw;
 
 	X[0] = q[0];
 	X[1] = q[1];
@@ -301,7 +300,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//X = X + K * Y;
 	Y[0] = 2.0f * (X[1] * X[3] - X[0] * X[2]);
 	Y[1] = 2.0f * (X[2] * X[3] + X[0] * X[1]);
-	Y[2] = -1.0f + 2.0f * (X[0] * X[0] + X[3] * X[3]);
+	Y[2] = 2.0f * (X[0] * X[0] + X[3] * X[3]) - 1.0f;
 #if EKF_STATE_DIM == 7
 	Y[3] = X[4];
 	Y[4] = X[5];

@@ -435,11 +435,6 @@
               <FileType>1</FileType>
               <FilePath>..\Application\Src\stm32f4_rcc.c</FilePath>
             </File>
-            <File>
-              <FileName>miniIMU.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\miniIMU\miniIMU.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

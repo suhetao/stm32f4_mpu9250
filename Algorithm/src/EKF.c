@@ -192,6 +192,9 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	F[27] = halfdtq0;
 
 	//model prediction
+	//simple way, pay attention!!!
+	//according to the actual gyroscope output
+	//and coordinate system definition
 	X[0] = q0 - (halfdx * q1 + halfdy * q2 + halfdz * q3);
 	X[1] = q1 + (halfdx * q0 + halfdy * q3 - halfdz * q2);
 	X[2] = q2 - (halfdx * q3 - halfdy * q0 - halfdz * q1);
