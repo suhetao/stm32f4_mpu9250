@@ -29,13 +29,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //////////////////////////////////////////////////////////////////////////
 //
 
-__inline void Matrix_Copy(float *pSrc, float *pDst, int numRows, int numCols)
+__inline void Matrix_Copy(float *pSrc, int numRows, int numCols, float *pDst)
 {
 	float *pIn = pSrc;
 	float *pOut = pDst;
 	unsigned int numSamples = numRows * numCols;
 	unsigned int blkCnt = numSamples >> 2u;
 	
+	//cortex-m3's speed optimization
 	while(blkCnt > 0u){
 		pOut[0] = pIn[0];
 		pOut[1] = pIn[1];
@@ -63,16 +64,14 @@ __inline int Maxtrix_Add(float *pSrcA, unsigned short numRows, unsigned short nu
 	unsigned int numSamples = numRows * numCols;
 	unsigned int blkCnt = numSamples >> 2u;
 
+	//cortex-m3's speed optimization
 	while(blkCnt > 0u){
 		// C(m,n) = A(m,n) + B(m,n)
-		pOut[0] = pIn1[0] + pIn2[0];
-		pOut[1] = pIn1[1] + pIn2[1];
-		pOut[2] = pIn1[2] + pIn2[2];
-		pOut[3] = pIn1[3] + pIn2[3];
-
-		pIn1 += 4u;
-		pIn2 += 4u;
-		pOut += 4u;
+		*(pOut++) = *(pIn1++) + (*pIn2++);
+		*(pOut++) = *(pIn1++) + (*pIn2++);
+		*(pOut++) = *(pIn1++) + (*pIn2++);
+		*(pOut++) = *(pIn1++) + (*pIn2++);
+		
 		blkCnt--;
 	}
 	blkCnt = numSamples & 0x03u;
@@ -96,14 +95,11 @@ __inline int Maxtrix_Sub(float *pSrcA, unsigned short numRows, unsigned short nu
 
 	while(blkCnt > 0u){
 		// C(m,n) = A(m,n) - B(m,n)
-		pOut[0] = pIn1[0] - pIn2[0];
-		pOut[1] = pIn1[1] - pIn2[1];
-		pOut[2] = pIn1[2] - pIn2[2];
-		pOut[3] = pIn1[3] - pIn2[3];
+		*(pOut++) = *(pIn1++) - (*pIn2++);
+		*(pOut++) = *(pIn1++) - (*pIn2++);
+		*(pOut++) = *(pIn1++) - (*pIn2++);
+		*(pOut++) = *(pIn1++) - (*pIn2++);
 
-		pIn1 += 4u;
-		pIn2 += 4u;
-		pOut += 4u;
 		blkCnt--;
 	}
 	blkCnt = numSamples & 0x03u;
@@ -163,12 +159,16 @@ __inline void Maxtrix_Transpose(float *pSrc, unsigned short nRows, unsigned shor
 		while(blkCnt > 0u){
 			*px = *pIn++;
 			px += nRows;
+			
 			*px = *pIn++;
 			px += nRows;
+			
 			*px = *pIn++;
 			px += nRows;
+			
 			*px = *pIn++;
 			px += nRows;
+			
 			blkCnt--;
 		}
 		blkCnt = nCols & 0x03u;

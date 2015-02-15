@@ -12,6 +12,5 @@ EKF(Extended Kalman filter) / Unscented Kalman Filter(UKF) / Cubature Kalman Fil
 
 2.Add a miniIMU for doctor's miniQuadrotor
 	
-	2.1add a new fixed-point ekf algorithm for doctor's miniQuadrotor 
-	
-please check the miniIMU directory at the root and look the usage.txt for using!
+	add a new fixed-point ekf algorithm for doctor's miniQuadrotor 
+	please check the miniIMU directory at the root and look the usage.txt for using!
