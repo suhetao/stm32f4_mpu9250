@@ -345,12 +345,12 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//or
 	//P=(I - K*H)*P*(I - K*H)' + K*R*K'
 #if 1
-/*
+#if 0
 	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, H, EKF_STATE_DIM, PX);
 	Maxtrix_Sub(I, EKF_STATE_DIM, EKF_STATE_DIM, PX, PX);
 	Maxtrix_Mul(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
 	Matrix_Copy(PXX, EKF_STATE_DIM, EKF_STATE_DIM, P);
-*/
+#endif
 	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, H, EKF_STATE_DIM, PX);
 	Maxtrix_Mul(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
 	Maxtrix_Sub(P, EKF_STATE_DIM, EKF_STATE_DIM, PXX, P);

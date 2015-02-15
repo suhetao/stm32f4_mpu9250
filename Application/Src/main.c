@@ -33,9 +33,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GYRO_TORAD(x) (((float)(x)) * 0.00106422515365507901031932363932f)
 
 //uncomment one
-//#define USE_6AXIS_EKF
+#define USE_6AXIS_EKF
 //#define USE_6AXIS_FP_EKF
-#define USE_EKF
+//#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
 
