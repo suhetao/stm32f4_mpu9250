@@ -126,9 +126,9 @@ arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s)
 		if (*p_Lkk <= 0.0f){
 			return ARM_MATH_SINGULAR;
 		}
-		//arm_sqrt_f32(*p_Lkk, p_Lkk);
-		//reciprocal = 1.0f / *p_Lkk;
-		reciprocal = FastInvSqrt(*p_Lkk);
+		arm_sqrt_f32(*p_Lkk, p_Lkk);
+		reciprocal = 1.0f / *p_Lkk;
+		//reciprocal = FastSqrtI(*p_Lkk);
 		p_Li0 = p_Lk0 + n;
 		for (i = k + 1; i < n; p_Li0 += n, i++) {
 			for (p = 0; p < k; p++)

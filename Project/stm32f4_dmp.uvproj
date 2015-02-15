@@ -347,7 +347,7 @@
             <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
-            <OneElfS>0</OneElfS>
+            <OneElfS>1</OneElfS>
             <Strict>0</Strict>
             <EnumInt>0</EnumInt>
             <PlainCh>0</PlainCh>
@@ -369,7 +369,7 @@
             <interw>1</interw>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <thumb>1</thumb>
+            <thumb>0</thumb>
             <SplitLS>0</SplitLS>
             <SwStkChk>0</SwStkChk>
             <NoWarn>0</NoWarn>
@@ -436,14 +436,14 @@
               <FilePath>..\Application\Src\stm32f4_rcc.c</FilePath>
             </File>
             <File>
-              <FileName>FP_miniIMU.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\miniIMU\FP\FP_miniIMU.c</FilePath>
-            </File>
-            <File>
               <FileName>miniIMU.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\miniIMU\miniIMU.c</FilePath>
+            </File>
+            <File>
+              <FileName>FP_miniIMU.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\FP\FP_miniIMU.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -536,6 +536,11 @@
           <GroupName>Algorithm</GroupName>
           <Files>
             <File>
+              <FileName>CKF.C</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\CKF.C</FilePath>
+            </File>
+            <File>
               <FileName>EKF.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\EKF.c</FilePath>
@@ -544,11 +549,6 @@
               <FileName>UKF.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\UKF.c</FilePath>
-            </File>
-            <File>
-              <FileName>CKF.C</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Algorithm\src\CKF.C</FilePath>
             </File>
           </Files>
         </Group>
@@ -561,9 +561,6 @@
               <FilePath>..\Matrix\src\Matrix.c</FilePath>
             </File>
           </Files>
-        </Group>
-        <Group>
-          <GroupName>Math</GroupName>
         </Group>
         <Group>
           <GroupName>DSP_Lib</GroupName>

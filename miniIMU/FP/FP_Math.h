@@ -355,16 +355,13 @@ __inline Q16 FP_SqrtI(Q16 xval, unsigned frac)
 //stuff
 __inline float FastSqrtI(float x)
 {
+	float xhalf = 0.5f * x;
 	Long2Float l2f;
-	float r;
-	float y = 0.5f * x;
-
-	l2f.f = y;
+	l2f.f = x;
+	
 	l2f.i = 0x5f3759df - (l2f.i >> 1);
-	r = l2f.f;
-	r = r * (1.5f - y * r * r);
-	//r = r * (1.5f - y * r * r);
-	return r;
+	x = l2f.f * (1.5f - xhalf * l2f.f * l2f.f);
+	return x;
 }
 
 __inline float FastSqrt(float x)

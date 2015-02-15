@@ -28,16 +28,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //////////////////////////////////////////////////////////////////////////
 //S16.16
 //all parameters below need to be tune
-#define FP_EKF_PQ_INITIAL 1//0.0000152587890625f
-#define FP_EKF_QQ_INITIAL 64//0.001
-#define FP_EKF_RA_INITIAL 4588//0.07
+#define FP_EKF_PQ_INITIAL 66//0.001
+#define FP_EKF_QQ_INITIAL 66//0.001
+#define FP_EKF_RA_INITIAL 1638//0.025
 
 #if FP_EKF_STATE_DIM == 4
 #define FP_EKF_MEASUREMENT_DIM 3
 #else //FP_FP_EKF_STATE_DIM == 7
 #define FP_EKF_MEASUREMENT_DIM 6
-#define FP_EKF_PW_INITIAL 1//0.0000152587890625f
-#define FP_EKF_QW_INITIAL 64//0.001
+#define FP_EKF_PW_INITIAL 66//0.001
+#define FP_EKF_QW_INITIAL 66//0.001
 #define FP_EKF_RW_INITIAL 3441//0.0525
 #endif
 //////////////////////////////////////////////////////////////////////////
@@ -351,7 +351,7 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	FP_Maxtrix_Mul(H, FP_EKF_MEASUREMENT_DIM, FP_EKF_STATE_DIM, PHT, FP_EKF_MEASUREMENT_DIM, S);
 	FP_Maxtrix_Add(S, FP_EKF_MEASUREMENT_DIM, FP_EKF_MEASUREMENT_DIM, R, S);
 	FP_Maxtrix_Inverse(S, FP_EKF_MEASUREMENT_DIM, FP_EKF_MEASUREMENT_DIM, SI);
-	FP_Maxtrix_Mul(PHT, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, S, FP_EKF_MEASUREMENT_DIM, K);
+	FP_Maxtrix_Mul(PHT, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, SI, FP_EKF_MEASUREMENT_DIM, K);
 
 	//state measurement update
 	//X = X + K * Y;

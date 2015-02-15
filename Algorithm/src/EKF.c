@@ -106,15 +106,15 @@ void EKF_Init(EKF_Filter* ekf, float32_t *q, float32_t *gyro)
 	X[2] = q[2];
 	X[3] = q[3];
 
-	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
 	X[3] *= norm;
 
 	X[4] = gyro[0];
-	X[5] = gyro[0];
-	X[6] = gyro[0];
+	X[5] = gyro[1];
+	X[6] = gyro[2];
 }
 
 void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt)
@@ -201,7 +201,7 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	X[3] = q3 + (halfdx * q2 - halfdy * q1 + halfdz * q0);
 	//////////////////////////////////////////////////////////////////////////
 	//Re-normalize Quaternion
-	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
@@ -216,14 +216,13 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 
 	//////////////////////////////////////////////////////////////////////////
 	//model and measurement differences
-
 	//normalize acc and mag measurements
-	norm = FastInvSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+	norm = FastSqrtI(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
 	accel[0] *= norm;
 	accel[1] *= norm;
 	accel[2] *= norm;
 	//////////////////////////////////////////////////////////////////////////
-	norm = FastInvSqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
+	norm = FastSqrtI(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
 	mag[0] *= norm;
 	mag[1] *= norm;
 	mag[2] *= norm;
@@ -343,7 +342,7 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	arm_mat_mult_f32(&ekf->K, &ekf->Y, &ekf->tmpX);
 	arm_mat_add_f32(&ekf->X, &ekf->tmpX, &ekf->X);
 	//normalize quaternion
-	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;

@@ -26,16 +26,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune
-#define UKF_PQ_INITIAL 0.000001
-#define UKF_PW_INITIAL 0.000001
+#define UKF_PQ_INITIAL 0.00001
+#define UKF_PW_INITIAL 0.00001
 
 #define UKF_QQ_INITIAL 0.000045
 #define UKF_QW_INITIAL 0.000025
 
-#define UKF_RQ_INITIAL 0.000001
-#define UKF_RA_INITIAL 0.07
-#define UKF_RW_INITIAL 0.0525
-#define UKF_RM_INITIAL 0.105
+#define UKF_RQ_INITIAL 0.0001
+#define UKF_RA_INITIAL 0.0005
+#define UKF_RW_INITIAL 0.000525
+#define UKF_RM_INITIAL 0.000105
 
 #define UKF_alpha (1.0f)
 #define UKF_beta (2.0f)
@@ -148,15 +148,15 @@ void UKF_Init(UKF_Filter* ukf, float32_t *q, float32_t *gyro)
 	X[2] = q[2];
 	X[3] = q[3];
 
-	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
 	X[3] *= norm;
 
 	X[4] = gyro[0];
-	X[5] = gyro[0];
-	X[6] = gyro[0];
+	X[5] = gyro[1];
+	X[6] = gyro[2];
 }
 
 void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt)
@@ -201,7 +201,7 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	tmpX[3] = tmpQ[3] - (halfdx * tmpQ[2] - halfdy * tmpQ[1] + halfdz * tmpQ[0]);
 	//////////////////////////////////////////////////////////////////////////
 	//Re-normalize Quaternion
-	norm = FastInvSqrt(tmpX[0] * tmpX[0] + tmpX[1] * tmpX[1] + tmpX[2] * tmpX[2] + tmpX[3] * tmpX[3]);
+	norm = FastSqrtI(tmpX[0] * tmpX[0] + tmpX[1] * tmpX[1] + tmpX[2] * tmpX[2] + tmpX[3] * tmpX[3]);
 	tmpX[0] *= norm;
 	tmpX[1] *= norm;
 	tmpX[2] *= norm;
@@ -233,7 +233,7 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 		tmpX[3] = tmpQ[3] - (halfdx * tmpQ[2] - halfdy * tmpQ[1] + halfdz * tmpQ[0]);
 		//////////////////////////////////////////////////////////////////////////
 		//re-normalize quaternion
-		norm = FastInvSqrt(tmpX[0] * tmpX[0] + tmpX[1] * tmpX[1] + tmpX[2] * tmpX[2] + tmpX[3] * tmpX[3]);
+		norm = FastSqrtI(tmpX[0] * tmpX[0] + tmpX[1] * tmpX[1] + tmpX[2] * tmpX[2] + tmpX[3] * tmpX[3]);
 		tmpX[0] *= norm;
 		tmpX[1] *= norm;
 		tmpX[2] *= norm;
@@ -261,12 +261,12 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	//unscented transformation of measurments
 	//////////////////////////////////////////////////////////////////////////
 	//Normalize accel and mag
-	norm = FastInvSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+	norm = FastSqrtI(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
 	accel[0] *= norm;
 	accel[1] *= norm;
 	accel[2] *= norm;
 	//////////////////////////////////////////////////////////////////////////
-	norm = FastInvSqrt(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
+	norm = FastSqrtI(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
 	mag[0] *= norm;
 	mag[1] *= norm;
 	mag[2] *= norm;
@@ -398,7 +398,7 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	arm_mat_mult_f32(&ukf->K, &ukf->Y, &ukf->tmpX);
 	arm_mat_add_f32(&ukf->X, &ukf->tmpX, &ukf->X);
 	//normalize quaternion
-	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;

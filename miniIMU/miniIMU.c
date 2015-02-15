@@ -24,13 +24,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "miniIMU.h"
 #include "FastMath.h"
 #include "Matrix.h"
-
 //////////////////////////////////////////////////////////////////////////
 //
 //all parameters below need to be tune
-#define EKF_PQ_INITIAL 0.000125
-#define EKF_QQ_INITIAL 0.0001
-#define EKF_RA_INITIAL 0.0025
+#define EKF_PQ_INITIAL 0.00125
+#define EKF_QQ_INITIAL 0.001
+#define EKF_RA_INITIAL 0.002
 
 #if EKF_STATE_DIM == 4
 #define EKF_MEASUREMENT_DIM 3
@@ -42,6 +41,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 //////////////////////////////////////////////////////////////////////////
 //
+static float I[EKF_STATE_DIM * EKF_STATE_DIM] = {
+#if EKF_STATE_DIM == 4
+	1.0f, 0, 0, 0,
+	0, 1.0f, 0, 0,
+	0, 0, 1.0f, 0,
+	0, 0, 0, 1.0f,
+#else //EKF_STATE_DIM == 7
+	1.0f, 0, 0, 0, 0, 0, 0,
+	0, 1.0f, 0, 0, 0, 0, 0,
+	0, 0, 1.0f, 0, 0, 0, 0,
+	0, 0, 0, 1.0f, 0, 0, 0,
+	0, 0, 0, 0, 1.0f, 0, 0,
+	0, 0, 0, 0, 0, 1.0f, 0,
+	0, 0, 0, 0, 0, 0, 1.0f,
+#endif
+};
+
 static float P[EKF_STATE_DIM * EKF_STATE_DIM] = {
 #if EKF_STATE_DIM == 4
 	EKF_PQ_INITIAL, 0, 0, 0,
@@ -135,13 +151,10 @@ static float Y[EKF_MEASUREMENT_DIM];
 static float CBn[9];
 //
 static float PX[EKF_STATE_DIM * EKF_STATE_DIM];
-static float tmpP[EKF_STATE_DIM * EKF_STATE_DIM];
-static float PHT[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
+static float PXX[EKF_STATE_DIM * EKF_STATE_DIM];
+static float PY[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 static float K[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
-static float FT[EKF_STATE_DIM * EKF_STATE_DIM];
-static float HT[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 static float S[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
-static float SI[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
 
 void EKF_IMUInit(float *accel, float *gyro)
 {
@@ -151,37 +164,37 @@ void EKF_IMUInit(float *accel, float *gyro)
 	float norm;
 	float crossVector[3];
 	float sinwi, cosw, sinhalfw, coshalfw;
-	float q[4];
 
 	//unit accel
-	norm = FastInvSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+	norm = FastSqrtI(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
 	accelVector[0] = accel[0] * norm;
 	accelVector[1] = accel[1] * norm;
 	accelVector[2] = accel[2] * norm;
-
+	
 	//cross product between accel and reference
 	crossVector[0] = accelVector[1] * nedVector[2] - accelVector[2] * nedVector[1];
 	crossVector[1] = accelVector[2] * nedVector[0] - accelVector[0] * nedVector[2];
 	crossVector[2] = accelVector[0] * nedVector[1] - accelVector[1] * nedVector[0];
-	sinwi = FastInvSqrt(crossVector[0] * crossVector[0] + crossVector[1] * crossVector[1] + crossVector[2] * crossVector[2]);
+	sinwi = FastSqrtI(crossVector[0] * crossVector[0] + crossVector[1] * crossVector[1] + crossVector[2] * crossVector[2]);
 	crossVector[0] *= sinwi;
 	crossVector[1] *= sinwi;
 	crossVector[2] *= sinwi;
 
 	//the angle between accel and reference is the dot product of the two vectors
 	cosw = accelVector[0] * nedVector[0] + accelVector[1] * nedVector[1] + accelVector[2] * nedVector[2];
-	coshalfw = FastSqrt(0.5f + 0.5f * cosw);
-	sinhalfw = FastSqrt(0.5f - 0.5f * cosw);
+	coshalfw = FastSqrt((1.0f + cosw) * 0.5f);
+	sinhalfw = FastSqrt((1.0f - cosw) * 0.5f);
 
-	q[0] = coshalfw;
-	q[1] = crossVector[0] * sinhalfw;
-	q[2] = crossVector[1] * sinhalfw;
-	q[3] = crossVector[2] * sinhalfw;
+	X[0] = coshalfw;
+	X[1] = crossVector[0] * sinhalfw;
+	X[2] = crossVector[1] * sinhalfw;
+	X[3] = crossVector[2] * sinhalfw;
 
-	X[0] = q[0];
-	X[1] = q[1];
-	X[2] = q[2];
-	X[3] = q[3];
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	X[0] *= norm;
+	X[1] *= norm;
+	X[2] *= norm;
+	X[3] *= norm;
 #if EKF_STATE_DIM == 7
 	X[4] = gyro[0];
 	X[5] = gyro[1];
@@ -194,7 +207,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	float norm;
 	float halfdx, halfdy, halfdz;
 	float neghalfdx, neghalfdy, neghalfdz;
-#if FP_EKF_STATE_DIM == 7
+#if EKF_STATE_DIM == 7
 	float halfdtq0, halfdtq1, neghalfdtq1, halfdtq2, neghalfdtq2, halfdtq3, neghalfdtq3;
 #endif
 	float halfdt = 0.5f * dt;
@@ -205,19 +218,16 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//////////////////////////////////////////////////////////////////////////
 #if EKF_STATE_DIM == 4
 	halfdx = halfdt * gyro[0];
-	neghalfdx = -halfdx;
 	halfdy = halfdt * gyro[1];
-	neghalfdy = -halfdy;
 	halfdz = halfdt * gyro[2];
-	neghalfdz = -halfdz;
 #else
 	halfdx = halfdt * X[4];
-	neghalfdx = -halfdx;
 	halfdy = halfdt * X[5];
-	neghalfdy = -halfdy;
 	halfdz = halfdt * X[6];
-	neghalfdz = -halfdz;
 #endif
+	neghalfdx = -halfdx;
+	neghalfdy = -halfdy;
+	neghalfdz = -halfdz;
 	//
 	q0 = X[0];
 	q1 = X[1];
@@ -258,7 +268,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	X[3] = q3 + (halfdx * q2 - halfdy * q1 + halfdz * q0);
 
 	//normalize quaternion
-	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
@@ -266,11 +276,10 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 
 	//covariance time propagation
 	//P = F*P*F' + Q;
-	Maxtrix_Mult(F, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PX);
-	Maxtrix_Trans(F, EKF_STATE_DIM, EKF_STATE_DIM, FT);
-	Maxtrix_Mult(PX, EKF_STATE_DIM, EKF_STATE_DIM, FT, EKF_STATE_DIM, P);
+	Maxtrix_Mul(F, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PX);
+	Maxtrix_Mul_With_Transpose(PX, EKF_STATE_DIM, EKF_STATE_DIM, F, EKF_STATE_DIM, P);
 	Maxtrix_Add(P, EKF_STATE_DIM, EKF_STATE_DIM, Q, P);
-	
+
 	//////////////////////////////////////////////////////////////////////////
 	//measurement update
 	//kalman gain calculation
@@ -289,12 +298,11 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	H[14] = _2q0; H[15] = -_2q1; H[16] = -_2q2; H[17] = _2q3;
 #endif
 
-	Maxtrix_Trans(H, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, HT);
-	Maxtrix_Mult(P, EKF_STATE_DIM, EKF_STATE_DIM, HT, EKF_MEASUREMENT_DIM, PHT);
-	Maxtrix_Mult(H, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, PHT, EKF_MEASUREMENT_DIM, S);
+	Maxtrix_Mul_With_Transpose(P, EKF_STATE_DIM, EKF_STATE_DIM, H, EKF_MEASUREMENT_DIM, PY);
+	Maxtrix_Mul(H, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, PY, EKF_MEASUREMENT_DIM, S);
 	Maxtrix_Add(S, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, R, S);
-	Maxtrix_Inverse(S, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, SI);
-	Maxtrix_Mult(PHT, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, S, EKF_MEASUREMENT_DIM, K);
+	Maxtrix_Inverse(S, EKF_MEASUREMENT_DIM);
+	Maxtrix_Mul(PY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, S, EKF_MEASUREMENT_DIM, K);
 
 	//state measurement update
 	//X = X + K * Y;
@@ -308,7 +316,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 #endif
 
 	//normalize accel
-	norm = FastInvSqrt(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+	norm = FastSqrtI(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
 	accel[0] *= norm;
 	accel[1] *= norm;
 	accel[2] *= norm;
@@ -321,11 +329,11 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	Y[4] = gyro[1] - Y[4];
 	Y[5] = gyro[2] - Y[5];
 #endif
-	Maxtrix_Mult(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, Y, 1, KY);
+	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, Y, 1, KY);
 	Maxtrix_Add(X, EKF_STATE_DIM, 1, X, KY);
 
 	//normalize quaternion
-	norm = FastInvSqrt(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
+	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
 	X[1] *= norm;
 	X[2] *= norm;
@@ -334,15 +342,29 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//covariance measurement update
 	//P = (I - K * H) * P
 	//P = P - K * H * P
-	Maxtrix_Mult(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, H, EKF_STATE_DIM, PX);
-	Maxtrix_Mult(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, tmpP);
-	Maxtrix_Sub(P, EKF_STATE_DIM, EKF_STATE_DIM, tmpP, P);
+	//or
+	//P=(I - K*H)*P*(I - K*H)' + K*R*K'
+#if 0
+	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, H, EKF_STATE_DIM, PX);
+	Maxtrix_Sub(I, EKF_STATE_DIM, EKF_STATE_DIM, PX, PX);
+	Maxtrix_Mul(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
+	Matrix_Copy(PXX, P, EKF_STATE_DIM, EKF_STATE_DIM);
+#else
+	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, H, EKF_STATE_DIM, PX);
+	Maxtrix_Sub(I, EKF_STATE_DIM, EKF_STATE_DIM, PX, PX);
+	Maxtrix_Mul(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
+	Maxtrix_Mul_With_Transpose(PXX, EKF_STATE_DIM, EKF_STATE_DIM, PX, EKF_STATE_DIM, P);
+	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, R, EKF_MEASUREMENT_DIM, PY);
+	Maxtrix_Mul_With_Transpose(PY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, K, EKF_STATE_DIM, PX);
+	Maxtrix_Add(P, EKF_STATE_DIM, EKF_STATE_DIM, PX, P);
+#endif
 }
 
 void EKF_IMUGetAngle(float* rpy)
 {
 	float q0q0 = X[0] * X[0];
-
+	
+	//x-y-z ned
 	CBn[0] = 2.0f * (q0q0 + X[1] * X[1]) - 1.0f;
 	CBn[1] = 2.0f * (X[1] * X[2] + X[0] * X[3]);
 	CBn[2] = 2.0f * (X[1] * X[3] - X[0] * X[2]);

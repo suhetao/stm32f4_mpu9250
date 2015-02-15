@@ -24,6 +24,64 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _FASTMATH_H_
 #define _FASTMATH_H_
 
+typedef union {
+	long i;
+	float f;
+}Long2Float;
+
+#define ROOT_HALF (0.70710678118654752440084436210485f)
+#define LOGA_COEF0 (-4.649062303464e-1f)
+#define LOGA_COEF1 (+1.360095468621e-2f)
+#define LOGB_COEF0 (-5.578873750242f)
+
+#define LOGDA_COEF0 (-6.4124943423745581147e1f)
+#define LOGDA_COEF1 (+1.6383943563021534222e1f)
+#define LOGDA_COEF2 (-7.8956112887491257267e-1f)
+#define LOGDB_COEF0 (-7.6949932108494879777e2f)
+#define LOGDB_COEF1 (+3.1203222091924532844e2f)
+#define LOGDB_COEF2 (-3.5667977739034646171e1f)
+#define LN2_DC1 (0.693359375f)
+#define LN2_DC2 (-2.121944400e-4f)
+#define LN2_DC3 (-5.46905827678e-14f)
+
+__inline float FastLn(float x)
+{
+	Long2Float e;	
+	float xn;
+	float	z;
+	float	w;
+	float	a;
+	float	b;
+	float	r;
+	float	result;
+	float znum, zden;
+	
+	int exponent = (*((int*)&x) & 0x7F800000) >> 23;
+	e.i = (*((int*)&x) & 0x3F800000);
+
+	if(e.f > ROOT_HALF){
+		znum = e.f - 1.0f;
+		zden = e.f * 0.5f + 0.5f;
+	}
+	else{
+		exponent -= 1;
+		znum = e.f - 0.5f;
+		zden = e.f * 0.5f + 0.5f;
+	}
+	xn = (float)exponent;
+	z = znum / zden;
+	w = z * z;
+	a = (LOGDA_COEF2 * w + LOGDA_COEF1) * w + LOGDA_COEF0;
+	b = ((w + LOGDB_COEF2) * w + LOGDB_COEF1) * w + LOGDB_COEF0;
+	r = a / b * w * z + z;
+	result = xn * LN2_DC1 + r;
+	r = xn * LN2_DC2;
+	result += r;
+	r = xn * LN2_DC3;
+	result += r;
+	return result;
+}
+
 //translate from the DSP instruction of a DSP Library.
 #define PI (3.1415926535897932384626433832795f)
 #define PI_2 (1.5707963267948966192313216916398f)
@@ -47,29 +105,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define ASINQ_COEF1 (+2.4864728969164e+1f)
 #define ASINQ_COEF2 (-1.0333867072113e+1f)
 
-typedef union {
-	long i;
-	float f;
-}Long2Float;
-
-
-__inline float FastInvSqrt(float x)
+__inline float FastSqrtI(float x)
 {
+	float xhalf = 0.5f * x;
 	Long2Float l2f;
-	float r;
-	float y = 0.5f * x;
-
-	l2f.f = y;
+	l2f.f = x;
+	
 	l2f.i = 0x5f3759df - (l2f.i >> 1);
-	r = l2f.f;
-	r = r * (1.5f - y * r * r);
-	//r = r * (1.5f - y * r * r);
-	return r;
+	x = l2f.f * (1.5f - xhalf * l2f.f * l2f.f);
+	return x;
 }
 
 __inline float FastSqrt(float x)
 {
-	return x * FastInvSqrt(x);
+	return x * FastSqrtI(x);
 }
 
 __inline float FastAsin(float x)

@@ -24,57 +24,62 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _MAXTRIX_H_
 #define _MAXTRIX_H_
 
+#include "FastMath.h"
+
 //////////////////////////////////////////////////////////////////////////
 //
+
+__inline void Matrix_Copy(float *pSrc, float *pDst, int numRows, int numCols)
+{
+	float *pIn = pSrc;
+	float *pOut = pDst;
+	unsigned int numSamples = numRows * numCols;
+	unsigned int blkCnt = numSamples >> 2u;
+	
+	while(blkCnt > 0u){
+		pOut[0] = pIn[0];
+		pOut[1] = pIn[1];
+		pOut[2] = pIn[2];
+		pOut[3] = pIn[3];
+		
+		pOut += 4u;
+		pIn += 4u;
+		blkCnt--;
+	}
+	blkCnt = numSamples & 0x03u;
+
+	while(blkCnt > 0u){
+		(*pOut++) = (*pIn++);
+		blkCnt--;
+	}
+}
+
 __inline int Maxtrix_Add(float *pSrcA, unsigned short numRows, unsigned short numCols, float *pSrcB, float *pDst)
 {
 	float *pIn1 = pSrcA;
 	float *pIn2 = pSrcB;
 	float *pOut = pDst;
 
-	float inA1, inA2, inB1, inB2, out1, out2;
+	unsigned int numSamples = numRows * numCols;
+	unsigned int blkCnt = numSamples >> 2u;
 
-	unsigned int numSamples;
-	unsigned int blkCnt;
-
-	numSamples = (unsigned int) numRows * numCols;
-
-	blkCnt = numSamples >> 2u;
 	while(blkCnt > 0u){
-		/* C(m,n) = A(m,n) + B(m,n) */
-		inA1 = pIn1[0];
-		inB1 = pIn2[0];
-		inA2 = pIn1[1];
-		out1 = inA1 + inB1;
-
-		inB2 = pIn2[1];
-		inA1 = pIn1[2];
-		out2 = inA2 + inB2;
-
-		inB1 = pIn2[2];
-		pOut[0] = out1;
-		pOut[1] = out2;
-
-		inA2 = pIn1[3];
-		inB2 = pIn2[3];
-		out1 = inA1 + inB1;
-		out2 = inA2 + inB2;
-
-		pOut[2] = out1;
-		pOut[3] = out2;
+		// C(m,n) = A(m,n) + B(m,n)
+		pOut[0] = pIn1[0] + pIn2[0];
+		pOut[1] = pIn1[1] + pIn2[1];
+		pOut[2] = pIn1[2] + pIn2[2];
+		pOut[3] = pIn1[3] + pIn2[3];
 
 		pIn1 += 4u;
 		pIn2 += 4u;
 		pOut += 4u;
-
 		blkCnt--;
 	}
 	blkCnt = numSamples & 0x03u;
 
 	while(blkCnt > 0u){
-		/* C(m,n) = A(m,n) + B(m,n) */
+		// C(m,n) = A(m,n) + B(m,n)
 		*pOut++ = (*pIn1++) + (*pIn2++);
-
 		blkCnt--;
 	}
 	return 0;
@@ -86,123 +91,64 @@ __inline int Maxtrix_Sub(float *pSrcA, unsigned short numRows, unsigned short nu
 	float *pIn2 = pSrcB;
 	float *pOut = pDst;
 
-	float inA1, inA2, inB1, inB2, out1, out2;
+	unsigned int numSamples = numRows * numCols;
+	unsigned int blkCnt = numSamples >> 2u;
 
-	unsigned int numSamples;
-	unsigned int blkCnt;
-
-	numSamples = (unsigned int) numRows * numCols;
-
-	blkCnt = numSamples >> 2u;
 	while(blkCnt > 0u){
-		/* C(m,n) = A(m,n) - B(m,n) */
-		inA1 = pIn1[0];
-		inB1 = pIn2[0];
-		inA2 = pIn1[1];
-		out1 = inA1 - inB1;
-
-		inB2 = pIn2[1];
-		inA1 = pIn1[2];
-		out2 = inA2 - inB2;
-
-		inB1 = pIn2[2];
-		pOut[0] = out1;
-		pOut[1] = out2;
-
-		inA2 = pIn1[3];
-		inB2 = pIn2[3];
-		out1 = inA1 - inB1;
-		out2 = inA2 - inB2;
-
-		pOut[2] = out1;
-		pOut[3] = out2;
+		// C(m,n) = A(m,n) - B(m,n)
+		pOut[0] = pIn1[0] - pIn2[0];
+		pOut[1] = pIn1[1] - pIn2[1];
+		pOut[2] = pIn1[2] - pIn2[2];
+		pOut[3] = pIn1[3] - pIn2[3];
 
 		pIn1 += 4u;
 		pIn2 += 4u;
 		pOut += 4u;
-
 		blkCnt--;
 	}
 	blkCnt = numSamples & 0x03u;
 
 	while(blkCnt > 0u){
-		/* C(m,n) = A(m,n) - B(m,n) */
-		*pOut++ = (*pIn1++) + (*pIn2++);
-
+		// C(m,n) = A(m,n) - B(m,n)
+		*pOut++ = (*pIn1++) - (*pIn2++);
 		blkCnt--;
 	}
 	return 0;
 }
 
-__inline int Maxtrix_Mult(float *pSrcA, unsigned short numRowsA, unsigned short numColsA, float *pSrcB, unsigned short numColsB, float *pDst)
+__inline int Maxtrix_Mul(float *A, int nrows, int ncols, float *B, int mcols, float *C)
 {
-	float *pIn1 = pSrcA;
-	float *pIn2 = pSrcB;
-	float *pInA = pSrcA;
-	float *pOut = pDst;
-	float *px;
-	float sum;
+	float *pB;
+	float *p_B;
+	int i,j,k;
 
-	float in1, in2, in3, in4;
-	unsigned short col, i = 0u, j, row = numRowsA, colCnt;
-	do{
-		px = pOut + i;
-		col = numColsB;
-		pIn2 = pSrcB;
-		j = 0u;
-
-		do{
-			sum = 0.0f;
-			pIn1 = pInA;
-			colCnt = numColsA >> 2u;
-			while(colCnt > 0u){
-				/* c(m,n) = a(1,1)*b(1,1) + a(1,2) * b(2,1) + .... + a(m,p)*b(p,n) */
-				in3 = *pIn2;
-				pIn2 += numColsB;
-				in1 = pIn1[0];
-				in2 = pIn1[1];
-				sum += in1 * in3;
-				in4 = *pIn2;
-				pIn2 += numColsB;
-				sum += in2 * in4;
-
-				in3 = *pIn2;
-				pIn2 += numColsB;
-				in1 = pIn1[2];
-				in2 = pIn1[3];
-				sum += in1 * in3;
-				in4 = *pIn2;
-				pIn2 += numColsB;
-				sum += in2 * in4;
-				pIn1 += 4u;
-
-				colCnt--;
-			}
-			colCnt = numColsA & 0x03u;
-
-			while(colCnt > 0u){
-				/* c(m,n) = a(1,1)*b(1,1) + a(1,2) * b(2,1) + .... + a(m,p)*b(p,n) */
-				sum += *pIn1++ * (*pIn2);
-				pIn2 += numColsB;
-
-				colCnt--;
-			}
-			*px++ = sum;
-			j++;
-			pIn2 = pSrcB + j;
-
-			col--;
-
-		} while(col > 0u);
-
-		i = i + numColsB;
-		pInA = pInA + numColsA;
-		row--;
-	} while(row > 0u);
+	for (i = 0; i < nrows; A += ncols, i++){
+		for (p_B = B, j = 0; j < mcols; C++, p_B++, j++) {
+			pB = p_B;
+			*C = 0.0; 
+			for (k = 0; k < ncols; pB += mcols, k++) 
+				*C += *(A+k) * *pB;
+		}
+	}
 	return 0;
 }
 
-__inline int Maxtrix_Trans(float *pSrc, unsigned short nRows, unsigned short nCols, float *pDst)
+__inline void Maxtrix_Mul_With_Transpose(float *A, int nrows, int ncols, float *B, int mrows, float *C) 
+{
+	int i,j,k;
+	float *pA;
+	float *pB;
+
+	for (i = 0; i < nrows; A += ncols, i++){
+		for (pB = B, j = 0; j < mrows; C++, j++){
+			for (pA = A, *C = 0.0, k  = 0; k < ncols; k++){
+				*C += *pA++ * *pB++;
+			}
+		}
+	}
+}
+
+__inline void Maxtrix_Transpose(float *pSrc, unsigned short nRows, unsigned short nCols, float *pDst)
 {
 	float *pIn = pSrc;
 	float *pOut = pDst;
@@ -235,161 +181,73 @@ __inline int Maxtrix_Trans(float *pSrc, unsigned short nRows, unsigned short nCo
 		i++;
 		row--;
 	} while(row > 0u);
+}
+
+__inline int Maxtrix_Inverse(float *A, unsigned int n)
+{
+	int i, j, k, p;
+	//////////////////////////////////////////////////////////////////////////
+	//choleski lu decomposition 
+	float *p_Lk0; // pointer to L[k][0]
+	float *p_Lkp; // pointer to L[k][p]  
+	float *p_Lkk; // pointer to diagonal element on row k.
+	float *p_Li0; // pointer to L[i][0]
+	float reciprocal;
+
+	//////////////////////////////////////////////////////////////////////////
+	//choleski lu inverse
+	float *p_i, *p_j, *p_k;
+	float *L = A;
+	float *LU = A;
+	float sum;
+
+	//////////////////////////////////////////////////////////////////////////
+	//choleski lu decomposition 
+	for (k = 0, p_Lk0 = A; k < n; p_Lk0 += n, k++) {
+		p_Lkk = p_Lk0 + k;
+		for (p = 0, p_Lkp = p_Lk0; p < k; p_Lkp += 1,  p++)
+			*p_Lkk -= *p_Lkp * *p_Lkp;
+		if (*p_Lkk <= 0.0f){
+			return -1;
+		}
+		reciprocal = FastSqrtI(*p_Lkk);
+		p_Li0 = p_Lk0 + n;
+		for (i = k + 1; i < n; p_Li0 += n, i++) {
+			for (p = 0; p < k; p++)
+				*(p_Li0 + k) -= *(p_Li0 + p) * *(p_Lk0 + p);
+			*(p_Li0 + k) *= reciprocal;
+			*(p_Lk0 + i) = *(p_Li0 + k);
+		}  
+	}
+	//////////////////////////////////////////////////////////////////////////
+	//lower triangular inverse
+	for (k = 0, p_k = L; k < n; p_k += (n + 1), k++) {
+		if (*p_k == 0.0f){
+			return -1;
+		}
+		else{
+			*p_k = 1.0f / *p_k;
+		}
+	}
+	for (i = 1, p_i = L + n; i < n; i++, p_i += n) {
+		for (j = 0, p_j = L; j < i; p_j += n, j++) {
+			sum = 0.0f;
+			for (k = j, p_k = p_j; k < i; k++, p_k += n)
+				sum += *(p_i + k) * *(p_k + j);
+			*(p_i + j) = - *(p_i + i) * sum;
+		}
+	}
+	//choleski lu inverse
+	for (i = 0, p_i = LU; i < n; i++, p_i += n) {
+		for (j = 0, p_j = LU; j <= i; j++, p_j += n) {
+			sum = 0.0;
+			for (k = i, p_k = p_i; k < n; k++, p_k += n)
+				sum += *(p_k + i) * *(p_k + j);
+			*(p_i + j) = sum;
+			*(p_j + i) = sum;
+		}
+	}
+
 	return 0;
 }
-
-__inline int Maxtrix_Inverse(float *pSrc, unsigned int numRows, unsigned int numCols, float *pDst)
-{
-	float *pIn = pSrc;
-	float *pOut = pDst;
-	float *pInT1, *pInT2;
-	float *pInT3, *pInT4;
-	float *pPivotRowIn, *pPRT_in, *pPivotRowDst, *pPRT_pDst;
-
-	float maxC;
-	int status = 0;
-	float Xchg, in = 0.0f, in1;
-	unsigned int i, rowCnt, flag = 0u, j, loopCnt, k, l;
-
-	pInT2 = pOut;
-	rowCnt = numRows;
-
-	while(rowCnt > 0u){
-		j = numRows - rowCnt;
-		while(j > 0u){
-			*pInT2++ = 0.0f;
-			j--;
-		}
-		*pInT2++ = 1.0f;
-		j = rowCnt - 1u;
-		while(j > 0u){
-			*pInT2++ = 0.0f;
-			j--;
-		}
-		rowCnt--;
-	}
-	loopCnt = numCols;
-	l = 0u;
-
-	while(loopCnt > 0u){
-		pInT1 = pIn + (l * numCols);
-		pInT3 = pOut + (l * numCols);
-		in = *pInT1;
-		k = 1u;
-		maxC = 0;
-		for (i = 0; i < numRows; i++){
-			maxC = *pInT1 > 0 ? (*pInT1 > maxC ? *pInT1 : maxC) : (-*pInT1 > maxC ? -*pInT1 : maxC);
-			pInT1 += numCols;
-		}
-		if(maxC == 0.0f){
-			status = -1;
-			break;
-		}
-		pInT1 -= numRows * numCols;
-		if( (in > 0.0f ? in : -in) != maxC){
-			i = numRows - (l + 1u);
-			while(i > 0u){
-				pInT2 = pInT1 + (numCols * l);
-				pInT4 = pInT3 + (numCols * k);
-
-				if((*pInT2 > 0.0f ? *pInT2: -*pInT2) == maxC){
-					j = numCols - l;
-
-					while(j > 0u){
-						Xchg = *pInT2;
-						*pInT2++ = *pInT1;
-						*pInT1++ = Xchg;
-						j--;
-					}
-					j = numCols;
-
-					while(j > 0u){
-						Xchg = *pInT4;
-						*pInT4++ = *pInT3;
-						*pInT3++ = Xchg;
-						j--;
-					}
-					flag = 1u;
-					break;
-				}
-				k++;
-				i--;
-			}
-		}
-		if((flag != 1u) && (in == 0.0f)){
-			status = -1;
-			break;
-		}
-
-		pPivotRowIn = pIn + (l * numCols);
-		pPivotRowDst = pOut + (l * numCols);
-
-		pInT1 = pPivotRowIn;
-		pInT2 = pPivotRowDst;
-		in = *pPivotRowIn;
-		j = (numCols - l);
-
-		while(j > 0u){
-			in1 = *pInT1;
-			*pInT1++ = in1 / in;
-			j--;
-		}
-		j = numCols;
-
-		while(j > 0u){
-			in1 = *pInT2;
-			*pInT2++ = in1 / in;
-			j--;
-		}
-		pInT1 = pIn;
-		pInT2 = pOut;
-
-		i = 0u;
-		k = numRows;
-
-		while(k > 0u){
-			if(i == l){
-				pInT1 += numCols - l;
-
-				pInT2 += numCols;
-			}
-			else{
-				in = *pInT1;
-
-				pPRT_in = pPivotRowIn;
-				pPRT_pDst = pPivotRowDst;
-
-				j = (numCols - l);
-
-				while(j > 0u){
-					in1 = *pInT1;
-					*pInT1++ = in1 - (in * *pPRT_in++);
-					j--;
-				}
-				j = numCols;
-
-				while(j > 0u){
-					in1 = *pInT2;
-					*pInT2++ = in1 - (in * *pPRT_pDst++);
-					j--;
-				}
-
-			}
-			pInT1 = pInT1 + l;
-			k--;
-			i++;
-		}
-		pIn++;
-		loopCnt--;
-		l++;
-	}
-	status = 0;
-
-	if((flag != 1u) && (in == 0.0f)){
-		status = -1;
-	}
-
-	return status;
-}
-
 #endif

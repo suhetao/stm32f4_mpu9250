@@ -34,8 +34,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //uncomment one
 //#define USE_6AXIS_EKF
-#define USE_6AXIS_FP_EKF
-//#define USE_EKF
+//#define USE_6AXIS_FP_EKF
+#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
 
@@ -52,8 +52,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 static s8 gyro_orientation[9] = {
-	-1, 0, 0,
-	0,-1, 0,
+	1, 0, 0,
+	0, 1, 0,
 	0, 0, 1
 };
 
@@ -195,9 +195,9 @@ int main(void)
 			fRealGyro[1] = GYRO_TORAD(s16Gyro[1]);
 			fRealGyro[2] = GYRO_TORAD(s16Gyro[2]);
 
-			fRealAccel[0] = s16Accel[0];
-			fRealAccel[1] = s16Accel[1];
-			fRealAccel[2] = s16Accel[2];
+			fRealAccel[0] = s16Accel[0] / 16384.0f;
+			fRealAccel[1] = s16Accel[1] / 16384.0f;
+			fRealAccel[2] = s16Accel[2] / 16384.0f;
 
 			fRealMag[0] = s16Mag[0];
 			fRealMag[1] = s16Mag[1];
