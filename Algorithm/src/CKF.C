@@ -26,23 +26,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune including the weight
-#define CKF_PQ_INITIAL 0.00001
-#define CKF_PW_INITIAL 0.00001
+#define CKF_PQ_INITIAL 0.000001
+#define CKF_PW_INITIAL 0.000001
 
-#define CKF_QQ_INITIAL 0.000045
-#define CKF_QW_INITIAL 0.000025
+#define CKF_QQ_INITIAL 0.0000045
+#define CKF_QW_INITIAL 0.0000025
 
-#define CKF_RQ_INITIAL 0.0001
-#define CKF_RA_INITIAL 0.0005
-#define CKF_RW_INITIAL 0.000525
-#define CKF_RM_INITIAL 0.000105
+#define CKF_RQ_INITIAL 0.00001
+#define CKF_RA_INITIAL 0.00005
+#define CKF_RW_INITIAL 0.0000525
+#define CKF_RM_INITIAL 0.0000105
 //////////////////////////////////////////////////////////////////////////
 //
-void CKF_New(CKF_Filter* ukf)
+void CKF_New(CKF_Filter* ckf)
 {
-	float32_t *P = ukf->P_f32;
-	float32_t *Q = ukf->Q_f32;
-	float32_t *R = ukf->R_f32;
+	float32_t *P = ckf->P_f32;
+	float32_t *Q = ckf->Q_f32;
+	float32_t *R = ckf->R_f32;
 	//////////////////////////////////////////////////////////////////////////
 	//initialise kesi
 	//generate the cubature point
@@ -56,74 +56,76 @@ void CKF_New(CKF_Filter* ukf)
 	arm_mat_init_f32(&KesiMinu, CKF_STATE_DIM, CKF_STATE_DIM, KesiMinus_f32);
 	arm_mat_identity_f32(&KesiPuls, kesi);
 	arm_mat_identity_f32(&KesiMinu, -kesi);
-	arm_mat_init_f32(&ukf->Kesi, CKF_STATE_DIM, CKF_CP_POINTS, ukf->Kesi_f32);
-	arm_mat_setsubmatrix_f32(&ukf->Kesi, &KesiPuls, 0, 0);
-	arm_mat_setsubmatrix_f32(&ukf->Kesi, &KesiMinu, 0, CKF_STATE_DIM);
-	arm_mat_init_f32(&ukf->iKesi, CKF_STATE_DIM, 1, ukf->iKesi_f32);
+	arm_mat_init_f32(&ckf->Kesi, CKF_STATE_DIM, CKF_CP_POINTS, ckf->Kesi_f32);
+	arm_mat_setsubmatrix_f32(&ckf->Kesi, &KesiPuls, 0, 0);
+	arm_mat_setsubmatrix_f32(&ckf->Kesi, &KesiMinu, 0, CKF_STATE_DIM);
+	arm_mat_init_f32(&ckf->iKesi, CKF_STATE_DIM, 1, ckf->iKesi_f32);
 
 	//initialise weight
-	ukf->W = 1.0f / (float32_t)CKF_CP_POINTS;
+	ckf->W = 1.0f / (float32_t)CKF_CP_POINTS;
 
 	//initialise P
-	arm_mat_init_f32(&ukf->P, CKF_STATE_DIM, CKF_STATE_DIM, ukf->P_f32);
+	arm_mat_init_f32(&ckf->P, CKF_STATE_DIM, CKF_STATE_DIM, ckf->P_f32);
 	P[0] = P[8] = P[16] = P[24] = CKF_PQ_INITIAL;
 	P[32] = P[40] = P[48] = CKF_PW_INITIAL;
 
-	arm_mat_init_f32(&ukf->PX, CKF_STATE_DIM, CKF_STATE_DIM, ukf->PX_f32);
-	arm_mat_init_f32(&ukf->PY, CKF_MEASUREMENT_DIM, CKF_MEASUREMENT_DIM, ukf->PY_f32);
-	arm_mat_init_f32(&ukf->tmpPY, CKF_MEASUREMENT_DIM, CKF_MEASUREMENT_DIM, ukf->tmpPY_f32);
-	arm_mat_init_f32(&ukf->PXY, CKF_STATE_DIM, CKF_MEASUREMENT_DIM, ukf->PXY_f32);
-	arm_mat_init_f32(&ukf->tmpPXY, CKF_STATE_DIM, CKF_MEASUREMENT_DIM, ukf->tmpPXY_f32);
+	arm_mat_init_f32(&ckf->PX, CKF_STATE_DIM, CKF_STATE_DIM, ckf->PX_f32);
+	arm_mat_init_f32(&ckf->PY, CKF_MEASUREMENT_DIM, CKF_MEASUREMENT_DIM, ckf->PY_f32);
+	arm_mat_init_f32(&ckf->tmpPY, CKF_MEASUREMENT_DIM, CKF_MEASUREMENT_DIM, ckf->tmpPY_f32);
+	arm_mat_init_f32(&ckf->PXY, CKF_STATE_DIM, CKF_MEASUREMENT_DIM, ckf->PXY_f32);
+	arm_mat_init_f32(&ckf->tmpPXY, CKF_STATE_DIM, CKF_MEASUREMENT_DIM, ckf->tmpPXY_f32);
 	//initialise Q
-	arm_mat_init_f32(&ukf->Q, CKF_STATE_DIM, CKF_STATE_DIM, ukf->Q_f32);
+	arm_mat_init_f32(&ckf->Q, CKF_STATE_DIM, CKF_STATE_DIM, ckf->Q_f32);
 	Q[0] = Q[8] = Q[16] = Q[24] = CKF_QQ_INITIAL;
 	Q[32] = Q[40] = Q[48] = CKF_QW_INITIAL;
 	//initialise R
-	arm_mat_init_f32(&ukf->R, CKF_MEASUREMENT_DIM, CKF_MEASUREMENT_DIM, ukf->R_f32);
+	arm_mat_init_f32(&ckf->R, CKF_MEASUREMENT_DIM, CKF_MEASUREMENT_DIM, ckf->R_f32);
 	R[0] = R[14] = R[28] = R[42] = CKF_RQ_INITIAL;
 	R[56] = R[70] = R[84] = CKF_RA_INITIAL;
 	R[98] = R[112] = R[126] = CKF_RW_INITIAL;
 	R[140] = R[154] = R[168] = CKF_RM_INITIAL;
 
 	//other stuff
-	arm_mat_init_f32(&ukf->XCP, CKF_STATE_DIM, CKF_CP_POINTS, ukf->XCP_f32);
-	arm_mat_init_f32(&ukf->XminusCP, CKF_STATE_DIM, CKF_CP_POINTS, ukf->XminusCP_f32);
-	arm_mat_init_f32(&ukf->YCP, CKF_MEASUREMENT_DIM, CKF_CP_POINTS, ukf->YSP_f32);
+	arm_mat_init_f32(&ckf->XCP, CKF_STATE_DIM, CKF_CP_POINTS, ckf->XCP_f32);
+	arm_mat_init_f32(&ckf->XminusCP, CKF_STATE_DIM, CKF_CP_POINTS, ckf->XminusCP_f32);
+	arm_mat_init_f32(&ckf->YCP, CKF_MEASUREMENT_DIM, CKF_CP_POINTS, ckf->YSP_f32);
 	//////////////////////////////////////////////////////////////////////////
-	arm_mat_init_f32(&ukf->K, CKF_STATE_DIM, CKF_MEASUREMENT_DIM, ukf->K_f32);
-	arm_mat_init_f32(&ukf->KT, CKF_MEASUREMENT_DIM, CKF_STATE_DIM, ukf->KT_f32);
+	arm_mat_init_f32(&ckf->K, CKF_STATE_DIM, CKF_MEASUREMENT_DIM, ckf->K_f32);
+	arm_mat_init_f32(&ckf->KT, CKF_MEASUREMENT_DIM, CKF_STATE_DIM, ckf->KT_f32);
 	//////////////////////////////////////////////////////////////////////////
-	arm_mat_init_f32(&ukf->X, CKF_STATE_DIM, 1, ukf->X_f32);
-	arm_mat_zero_f32(&ukf->X);
-	arm_mat_init_f32(&ukf->XT, 1, CKF_STATE_DIM, ukf->XT_f32);
-	arm_mat_zero_f32(&ukf->XT);
+	arm_mat_init_f32(&ckf->X, CKF_STATE_DIM, 1, ckf->X_f32);
+	arm_mat_zero_f32(&ckf->X);
+	arm_mat_init_f32(&ckf->XT, 1, CKF_STATE_DIM, ckf->XT_f32);
+	arm_mat_zero_f32(&ckf->XT);
 	
-	arm_mat_init_f32(&ukf->Xminus, CKF_STATE_DIM, 1, ukf->Xminus_f32);
-	arm_mat_zero_f32(&ukf->Xminus);
-	arm_mat_init_f32(&ukf->XminusT, 1, CKF_STATE_DIM, ukf->XminusT_f32);
-	arm_mat_zero_f32(&ukf->XminusT);
+	arm_mat_init_f32(&ckf->Xminus, CKF_STATE_DIM, 1, ckf->Xminus_f32);
+	arm_mat_zero_f32(&ckf->Xminus);
+	arm_mat_init_f32(&ckf->XminusT, 1, CKF_STATE_DIM, ckf->XminusT_f32);
+	arm_mat_zero_f32(&ckf->XminusT);
 	
-	arm_mat_init_f32(&ukf->tmpX, CKF_STATE_DIM, 1, ukf->tmpX_f32);
-	arm_mat_zero_f32(&ukf->tmpX);
+	arm_mat_init_f32(&ckf->tmpX, CKF_STATE_DIM, 1, ckf->tmpX_f32);
+	arm_mat_zero_f32(&ckf->tmpX);
+	arm_mat_init_f32(&ckf->tmpS, CKF_STATE_DIM, 1, ckf->tmpS_f32);
+	arm_mat_zero_f32(&ckf->tmpS);
 	//////////////////////////////////////////////////////////////////////////
-	arm_mat_init_f32(&ukf->Y, CKF_MEASUREMENT_DIM, 1, ukf->Y_f32);
-	arm_mat_zero_f32(&ukf->Y);
-	arm_mat_init_f32(&ukf->YT, 1, CKF_MEASUREMENT_DIM, ukf->YT_f32);
-	arm_mat_zero_f32(&ukf->YT);
+	arm_mat_init_f32(&ckf->Y, CKF_MEASUREMENT_DIM, 1, ckf->Y_f32);
+	arm_mat_zero_f32(&ckf->Y);
+	arm_mat_init_f32(&ckf->YT, 1, CKF_MEASUREMENT_DIM, ckf->YT_f32);
+	arm_mat_zero_f32(&ckf->YT);
 	
-	arm_mat_init_f32(&ukf->Yminus, CKF_MEASUREMENT_DIM, 1, ukf->Yminus_f32);
-	arm_mat_zero_f32(&ukf->Yminus);
-	arm_mat_init_f32(&ukf->YminusT, 1, CKF_MEASUREMENT_DIM, ukf->YminusT_f32);
-	arm_mat_zero_f32(&ukf->YminusT);
+	arm_mat_init_f32(&ckf->Yminus, CKF_MEASUREMENT_DIM, 1, ckf->Yminus_f32);
+	arm_mat_zero_f32(&ckf->Yminus);
+	arm_mat_init_f32(&ckf->YminusT, 1, CKF_MEASUREMENT_DIM, ckf->YminusT_f32);
+	arm_mat_zero_f32(&ckf->YminusT);
 	
-	arm_mat_init_f32(&ukf->tmpY, CKF_MEASUREMENT_DIM, 1, ukf->tmpY_f32);
-	arm_mat_zero_f32(&ukf->tmpY);
+	arm_mat_init_f32(&ckf->tmpY, CKF_MEASUREMENT_DIM, 1, ckf->tmpY_f32);
+	arm_mat_zero_f32(&ckf->tmpY);
 	//////////////////////////////////////////////////////////////////////////
 }
 
-void CKF_Init(CKF_Filter* ukf, float32_t *q, float32_t *gyro)
+void CKF_Init(CKF_Filter* ckf, float32_t *q, float32_t *gyro)
 {	
-	float32_t *X = ukf->X_f32;
+	float32_t *X = ckf->X_f32;
 	float32_t norm;
 
 	//initialise quaternion state
@@ -144,7 +146,7 @@ void CKF_Init(CKF_Filter* ukf, float32_t *q, float32_t *gyro)
 	X[6] = gyro[2];
 }
 
-void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt)
+void CKF_Update(CKF_Filter* ckf, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt)
 {
 	int col, row;
 	float32_t norm;
@@ -158,23 +160,24 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	float32_t bx, bz;
 	float32_t _2mx, _2my, _2mz;
 	//
-	float32_t *X = ukf->X_f32, *Y = ukf->Y_f32;
-	float32_t *tmpX = ukf->tmpX_f32, *tmpY = ukf->tmpY_f32;
-	float32_t *iKesi = ukf->iKesi_f32;
-	float32_t *Xminus = ukf->Xminus_f32;
-	float32_t *Yminus = ukf->Yminus_f32;
-	float32_t tmpQ[4];
+	float32_t *X = ckf->X_f32, *Y = ckf->Y_f32;
+	float32_t *tmpX = ckf->tmpX_f32, *tmpY = ckf->tmpY_f32;
+	float32_t *iKesi = ckf->iKesi_f32;
+	float32_t *Xminus = ckf->Xminus_f32;
+	float32_t *Yminus = ckf->Yminus_f32;
+	float32_t *tmpS = ckf->tmpS_f32;
+	float32_t tmpQ[4];	
 	//////////////////////////////////////////////////////////////////////////
 	//time update
 	//evaluate the cholesky factor
-	arm_mat_chol_f32(&ukf->P);
-	arm_mat_remainlower_f32(&ukf->P);
+	arm_mat_chol_f32(&ckf->P);
+	arm_mat_remainlower_f32(&ckf->P);
 
 	//evaluate the cubature points
-	arm_mat_getcolumn_f32(&ukf->Kesi, iKesi, 0);
-	arm_mat_mult_f32(&ukf->P, &ukf->iKesi, &ukf->tmpX);
-	arm_mat_add_f32(&ukf->tmpX, &ukf->X, &ukf->tmpX);
-	arm_mat_setcolumn_f32(&ukf->XCP, tmpX, 0);
+	arm_mat_getcolumn_f32(&ckf->Kesi, iKesi, 0);
+	arm_mat_mult_f32(&ckf->P, &ckf->iKesi, &ckf->tmpX);
+	arm_mat_add_f32(&ckf->tmpX, &ckf->X, &ckf->tmpX);
+	arm_mat_setcolumn_f32(&ckf->XCP, tmpX, 0);
 	//
 	//evaluate the propagated cubature points
 	halfdx = halfdt * tmpX[4];
@@ -201,16 +204,16 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	tmpX[2] *= norm;
 	tmpX[3] *= norm;
 	//
-	arm_mat_setcolumn_f32(&ukf->XminusCP, tmpX, 0);
+	arm_mat_setcolumn_f32(&ckf->XminusCP, tmpX, 0);
 	for(row = 0; row < CKF_STATE_DIM; row++){
-		X[row] = tmpX[row];
+		tmpS[row] = tmpX[row];
 	}
 	for(col = 1; col < CKF_CP_POINTS; col++){
 		//evaluate the cubature points
-		arm_mat_getcolumn_f32(&ukf->Kesi, iKesi, col);
-		arm_mat_mult_f32(&ukf->P, &ukf->iKesi, &ukf->tmpX);
-		arm_mat_add_f32(&ukf->tmpX, &ukf->X, &ukf->tmpX);
-		arm_mat_setcolumn_f32(&ukf->XCP, tmpX, col);
+		arm_mat_getcolumn_f32(&ckf->Kesi, iKesi, col);
+		arm_mat_mult_f32(&ckf->P, &ckf->iKesi, &ckf->tmpX);
+		arm_mat_add_f32(&ckf->tmpX, &ckf->X, &ckf->tmpX);
+		arm_mat_setcolumn_f32(&ckf->XCP, tmpX, col);
 		//
 		//evaluate the propagated cubature points
 		halfdx = halfdt * tmpX[4];
@@ -237,40 +240,40 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 		tmpX[2] *= norm;
 		tmpX[3] *= norm;
 		//
-		arm_mat_setcolumn_f32(&ukf->XminusCP, tmpX, col);
+		arm_mat_setcolumn_f32(&ckf->XminusCP, tmpX, col);
 		for(row = 0; row < CKF_STATE_DIM; row++){
-			X[row] += tmpX[row];
+			tmpS[row] += tmpX[row];
 		}
 	}
 	//estimate the predicted state
-	arm_mat_scale_f32(&ukf->X, ukf->W, &ukf->X);
+	arm_mat_scale_f32(&ckf->tmpS, ckf->W, &ckf->X);
 	//estimate the predicted error covariance
-	arm_mat_getcolumn_f32(&ukf->XminusCP, Xminus, 0);
-	arm_mat_trans_f32(&ukf->Xminus, &ukf->XminusT);
-	arm_mat_mult_f32(&ukf->Xminus, &ukf->XminusT, &ukf->P);
+	arm_mat_getcolumn_f32(&ckf->XminusCP, Xminus, 0);
+	arm_mat_trans_f32(&ckf->Xminus, &ckf->XminusT);
+	arm_mat_mult_f32(&ckf->Xminus, &ckf->XminusT, &ckf->P);
 	for(col = 1; col < CKF_CP_POINTS; col++){
-		arm_mat_getcolumn_f32(&ukf->XminusCP, Xminus, col);
-		arm_mat_trans_f32(&ukf->Xminus, &ukf->XminusT);
-		arm_mat_mult_f32(&ukf->Xminus, &ukf->XminusT, &ukf->PX);
-		arm_mat_add_f32(&ukf->P, &ukf->PX, &ukf->P);
+		arm_mat_getcolumn_f32(&ckf->XminusCP, Xminus, col);
+		arm_mat_trans_f32(&ckf->Xminus, &ckf->XminusT);
+		arm_mat_mult_f32(&ckf->Xminus, &ckf->XminusT, &ckf->PX);
+		arm_mat_add_f32(&ckf->P, &ckf->PX, &ckf->P);
 	}
-	arm_mat_scale_f32(&ukf->P, ukf->W, &ukf->P);
-	arm_mat_trans_f32(&ukf->X, &ukf->XT);
-	arm_mat_mult_f32(&ukf->X, &ukf->XT, &ukf->PX);
-	arm_mat_sub_f32(&ukf->P, &ukf->PX, &ukf->P);
-	arm_mat_add_f32(&ukf->P, &ukf->Q, &ukf->P);
+	arm_mat_scale_f32(&ckf->P, ckf->W, &ckf->P);
+	arm_mat_trans_f32(&ckf->X, &ckf->XT);
+	arm_mat_mult_f32(&ckf->X, &ckf->XT, &ckf->PX);
+	arm_mat_sub_f32(&ckf->P, &ckf->PX, &ckf->P);
+	arm_mat_add_f32(&ckf->P, &ckf->Q, &ckf->P);
 	
 	//////////////////////////////////////////////////////////////////////////
 	//measurement update
 	//evaluate the cholesky factor
-	arm_mat_chol_f32(&ukf->P);
-	arm_mat_remainlower_f32(&ukf->P);
+	arm_mat_chol_f32(&ckf->P);
+	arm_mat_remainlower_f32(&ckf->P);
 		
 	//evaluate the cubature points
-	arm_mat_getcolumn_f32(&ukf->Kesi, iKesi, 0);
-	arm_mat_mult_f32(&ukf->P, &ukf->iKesi, &ukf->tmpX);
-	arm_mat_add_f32(&ukf->tmpX, &ukf->X, &ukf->tmpX);
-	arm_mat_setcolumn_f32(&ukf->XCP, tmpX, 0);
+	arm_mat_getcolumn_f32(&ckf->Kesi, iKesi, 0);
+	arm_mat_mult_f32(&ckf->P, &ckf->iKesi, &ckf->tmpX);
+	arm_mat_add_f32(&ckf->tmpX, &ckf->X, &ckf->tmpX);
+	arm_mat_setcolumn_f32(&ckf->XCP, tmpX, 0);
 	
 	//normalize accel and mag
 	norm = FastSqrtI(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
@@ -325,17 +328,17 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	tmpY[11] = bx * (2.0f * (q1q2 - q0q3)) + bz * (2.0f * (q2q3 + q0q1));
 	tmpY[12] = bx * (2.0f * (q1q3 + q0q2)) + bz * (1.0f - 2.0f * (q1q1 + q2q2));
 	
-	arm_mat_setcolumn_f32(&ukf->YCP, tmpY, 0);
+	arm_mat_setcolumn_f32(&ckf->YCP, tmpY, 0);
 	for(row = 0; row < CKF_MEASUREMENT_DIM; row++){
 		Y[row] = tmpY[row];
 	}
 	
 	for(col = 1; col < CKF_CP_POINTS; col++){
 		//evaluate the cubature points
-		arm_mat_getcolumn_f32(&ukf->Kesi, iKesi, col);
-		arm_mat_mult_f32(&ukf->P, &ukf->iKesi, &ukf->tmpX);
-		arm_mat_add_f32(&ukf->tmpX, &ukf->X, &ukf->tmpX);
-		arm_mat_setcolumn_f32(&ukf->XCP, tmpX, col);
+		arm_mat_getcolumn_f32(&ckf->Kesi, iKesi, col);
+		arm_mat_mult_f32(&ckf->P, &ckf->iKesi, &ckf->tmpX);
+		arm_mat_add_f32(&ckf->tmpX, &ckf->X, &ckf->tmpX);
+		arm_mat_setcolumn_f32(&ckf->XCP, tmpX, col);
 		
 		//auxiliary variables to avoid repeated arithmetic
 		_2q0 = 2.0f * tmpX[0];
@@ -374,51 +377,51 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 		tmpY[10] = bx * (1.0f - 2.0f * (q2q2 + q3q3)) + bz * ( 2.0f * (q1q3 - q0q2));
 		tmpY[11] = bx * (2.0f * (q1q2 - q0q3)) + bz * (2.0f * (q2q3 + q0q1));
 		tmpY[12] = bx * (2.0f * (q1q3 + q0q2)) + bz * (1.0f - 2.0f * (q1q1 + q2q2));
-		arm_mat_setcolumn_f32(&ukf->YCP, tmpY, col);
+		arm_mat_setcolumn_f32(&ckf->YCP, tmpY, col);
 		for(row = 0; row < CKF_MEASUREMENT_DIM; row++){
 			Y[row] += tmpY[row];
 		}
 	}
 	//estimate the predicted measurement
-	arm_mat_scale_f32(&ukf->Y, ukf->W, &ukf->Y);
+	arm_mat_scale_f32(&ckf->Y, ckf->W, &ckf->Y);
 	//estimate the innovation covariance matrix
-	arm_mat_getcolumn_f32(&ukf->YCP, Yminus, 0);
-	arm_mat_trans_f32(&ukf->Yminus, &ukf->YminusT);
-	arm_mat_mult_f32(&ukf->Yminus, &ukf->YminusT, &ukf->PY);
+	arm_mat_getcolumn_f32(&ckf->YCP, Yminus, 0);
+	arm_mat_trans_f32(&ckf->Yminus, &ckf->YminusT);
+	arm_mat_mult_f32(&ckf->Yminus, &ckf->YminusT, &ckf->PY);
 	for(col = 1; col < CKF_CP_POINTS; col++){
-		arm_mat_getcolumn_f32(&ukf->YCP, Yminus, col);
-		arm_mat_trans_f32(&ukf->Yminus, &ukf->YminusT);
-		arm_mat_mult_f32(&ukf->Yminus, &ukf->YminusT, &ukf->tmpPY);
-		arm_mat_add_f32(&ukf->PY, &ukf->tmpPY, &ukf->PY);
+		arm_mat_getcolumn_f32(&ckf->YCP, Yminus, col);
+		arm_mat_trans_f32(&ckf->Yminus, &ckf->YminusT);
+		arm_mat_mult_f32(&ckf->Yminus, &ckf->YminusT, &ckf->tmpPY);
+		arm_mat_add_f32(&ckf->PY, &ckf->tmpPY, &ckf->PY);
 	}
-	arm_mat_scale_f32(&ukf->PY, ukf->W, &ukf->PY);
-	arm_mat_trans_f32(&ukf->Y, &ukf->YT);
-	arm_mat_mult_f32(&ukf->Y, &ukf->YT, &ukf->tmpPY);
-	arm_mat_sub_f32(&ukf->PY, &ukf->tmpPY, &ukf->PY);
-	arm_mat_add_f32(&ukf->PY, &ukf->R, &ukf->PY);
+	arm_mat_scale_f32(&ckf->PY, ckf->W, &ckf->PY);
+	arm_mat_trans_f32(&ckf->Y, &ckf->YT);
+	arm_mat_mult_f32(&ckf->Y, &ckf->YT, &ckf->tmpPY);
+	arm_mat_sub_f32(&ckf->PY, &ckf->tmpPY, &ckf->PY);
+	arm_mat_add_f32(&ckf->PY, &ckf->R, &ckf->PY);
 	
 	//estimate the cross-covariance matrix
-	arm_mat_getcolumn_f32(&ukf->XCP, Xminus, 0);
-	arm_mat_getcolumn_f32(&ukf->YCP, Yminus, 0);
-	arm_mat_trans_f32(&ukf->Yminus, &ukf->YminusT);
-	arm_mat_mult_f32(&ukf->Xminus, &ukf->YminusT, &ukf->PXY);
-	arm_mat_scale_f32(&ukf->PXY, ukf->W, &ukf->PXY);
+	arm_mat_getcolumn_f32(&ckf->XCP, Xminus, 0);
+	arm_mat_getcolumn_f32(&ckf->YCP, Yminus, 0);
+	arm_mat_trans_f32(&ckf->Yminus, &ckf->YminusT);
+	arm_mat_mult_f32(&ckf->Xminus, &ckf->YminusT, &ckf->PXY);
+	arm_mat_scale_f32(&ckf->PXY, ckf->W, &ckf->PXY);
 	for(col = 1; col < CKF_CP_POINTS; col++){
-		arm_mat_getcolumn_f32(&ukf->XCP, Xminus, col);
-		arm_mat_getcolumn_f32(&ukf->YCP, Yminus, col);
-		arm_mat_trans_f32(&ukf->Yminus, &ukf->YminusT);
-		arm_mat_mult_f32(&ukf->Xminus, &ukf->YminusT, &ukf->tmpPXY);
-		arm_mat_scale_f32(&ukf->tmpPXY, ukf->W, &ukf->tmpPXY);
-		arm_mat_add_f32(&ukf->PXY, &ukf->tmpPXY, &ukf->PXY);
+		arm_mat_getcolumn_f32(&ckf->XCP, Xminus, col);
+		arm_mat_getcolumn_f32(&ckf->YCP, Yminus, col);
+		arm_mat_trans_f32(&ckf->Yminus, &ckf->YminusT);
+		arm_mat_mult_f32(&ckf->Xminus, &ckf->YminusT, &ckf->tmpPXY);
+		arm_mat_scale_f32(&ckf->tmpPXY, ckf->W, &ckf->tmpPXY);
+		arm_mat_add_f32(&ckf->PXY, &ckf->tmpPXY, &ckf->PXY);
 	}
-	//arm_mat_scale_f32(&ukf->PXY, ukf->W, &ukf->PXY);
-	arm_mat_trans_f32(&ukf->Y, &ukf->YT);
-	arm_mat_mult_f32(&ukf->X, &ukf->YT, &ukf->tmpPXY);
-	arm_mat_sub_f32(&ukf->PXY, &ukf->tmpPXY, &ukf->PXY);
+	//arm_mat_scale_f32(&ckf->PXY, ckf->W, &ckf->PXY);
+	arm_mat_trans_f32(&ckf->Y, &ckf->YT);
+	arm_mat_mult_f32(&ckf->X, &ckf->YT, &ckf->tmpPXY);
+	arm_mat_sub_f32(&ckf->PXY, &ckf->tmpPXY, &ckf->PXY);
 	//estimate the kalman gain
 	//K = PXY * inv(PY);
-	arm_mat_inverse_f32(&ukf->PY, &ukf->tmpPY);
-	arm_mat_mult_f32(&ukf->PXY, &ukf->tmpPY, &ukf->K);
+	arm_mat_inverse_f32(&ckf->PY, &ckf->tmpPY);
+	arm_mat_mult_f32(&ckf->PXY, &ckf->tmpPY, &ckf->K);
 	//estimate the updated state
 	//X = X + K*(z - Y);
 	Y[0] = q[0] - Y[0];
@@ -437,8 +440,8 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	Y[11] = mag[1] - Y[11];
 	Y[12] = mag[2] - Y[12];
 
-	arm_mat_mult_f32(&ukf->K, &ukf->Y, &ukf->tmpX);
-	arm_mat_add_f32(&ukf->X, &ukf->tmpX, &ukf->X);
+	arm_mat_mult_f32(&ckf->K, &ckf->Y, &ckf->tmpX);
+	arm_mat_add_f32(&ckf->X, &ckf->tmpX, &ckf->X);
 	//normalize quaternion
 	norm = FastSqrtI(X[0] * X[0] + X[1] * X[1] + X[2] * X[2] + X[3] * X[3]);
 	X[0] *= norm;
@@ -448,17 +451,17 @@ void CKF_Update(CKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	//estimate the corresponding error covariance
 	//the default tuning parameters don't work properly
 	//must tune the P,Q,R and calibrate the sensor data
-	//P = PX - K * PY * K'
-	arm_mat_trans_f32(&ukf->K, &ukf->KT);
-	arm_mat_mult_f32(&ukf->K, &ukf->PY, &ukf->PXY);
-	arm_mat_mult_f32(&ukf->PXY, &ukf->KT, &ukf->P);
-	arm_mat_sub_f32(&ukf->PX, &ukf->P, &ukf->P);
+	//P = P - K * PY * K'
+	arm_mat_trans_f32(&ckf->K, &ckf->KT);
+	arm_mat_mult_f32(&ckf->K, &ckf->PY, &ckf->PXY);
+	arm_mat_mult_f32(&ckf->PXY, &ckf->KT, &ckf->PX);
+	arm_mat_sub_f32(&ckf->P, &ckf->PX, &ckf->P);
 }
 
-void CKF_GetAngle(CKF_Filter* ukf, float32_t* rpy)
+void CKF_GetAngle(CKF_Filter* ckf, float32_t* rpy)
 {
 	float32_t R[3][3];
-	float32_t *X = ukf->X_f32;
+	float32_t *X = ckf->X_f32;
 	//Z-Y-X
 	R[0][0] = 2.0f * (X[0] * X[0] + X[1] * X[1]) - 1.0f;
 	R[0][1] = 2.0f * (X[1] * X[2] + X[0] * X[3]);

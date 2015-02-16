@@ -77,7 +77,7 @@ arm_status arm_mat_remainlower_f32(arm_matrix_instance_f32* s)
 	if (nrows != ncols){
 		return ARM_MATH_SIZE_MISMATCH;
 	}
-	for (k = 0, p_Uk0 = A; k < nrows; p_Uk0 += nrows, k++){
+	for (k = 0, p_Uk0 = A; k < nrows; p_Uk0 += ncols, k++){
 		for (p = k + 1; p < ncols; p++){
 			p_Ukp = p_Uk0 + p;
 			*p_Ukp = 0.0f;
@@ -121,8 +121,9 @@ arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s)
 
 	for (k = 0, p_Lk0 = A; k < n; p_Lk0 += n, k++) {
 		p_Lkk = p_Lk0 + k;
-		for (p = 0, p_Lkp = p_Lk0; p < k; p_Lkp += 1,  p++)
+		for (p = 0, p_Lkp = p_Lk0; p < k; p_Lkp += 1,  p++){
 			*p_Lkk -= *p_Lkp * *p_Lkp;
+		}
 		if (*p_Lkk <= 0.0f){
 			return ARM_MATH_SINGULAR;
 		}
@@ -131,8 +132,9 @@ arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s)
 		//reciprocal = FastSqrtI(*p_Lkk);
 		p_Li0 = p_Lk0 + n;
 		for (i = k + 1; i < n; p_Li0 += n, i++) {
-			for (p = 0; p < k; p++)
+			for (p = 0; p < k; p++){
 				*(p_Li0 + k) -= *(p_Li0 + p) * *(p_Lk0 + p);
+			}
 			*(p_Li0 + k) *= reciprocal;
 			*(p_Lk0 + i) = *(p_Li0 + k);
 		}  

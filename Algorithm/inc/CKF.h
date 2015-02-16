@@ -31,7 +31,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //13-measurement q0 q1 q2 q3 ax ay az wx wy wz mx my mz
 #define CKF_MEASUREMENT_DIM 13
 
-#define CKF_CP_POINTS 14//(2 * CKF_STATE_DIM )
+#define CKF_CP_POINTS 14//(2 * CKF_STATE_DIM)
 
 #define CKF_HALFPI 1.5707963267948966192313216916398f
 #define CKF_PI 3.1415926535897932384626433832795f
@@ -67,6 +67,7 @@ typedef struct CKF_FILTER_T{
 	float32_t Xminus_f32[CKF_STATE_DIM];
 	float32_t XminusT_f32[CKF_STATE_DIM];
 	float32_t tmpX_f32[CKF_STATE_DIM];
+	float32_t tmpS_f32[CKF_STATE_DIM];
 	//measurement vector
 	float32_t Y_f32[CKF_MEASUREMENT_DIM];
 	float32_t YT_f32[CKF_MEASUREMENT_DIM];
@@ -97,6 +98,7 @@ typedef struct CKF_FILTER_T{
 	arm_matrix_instance_f32 Xminus;
 	arm_matrix_instance_f32 XminusT;
 	arm_matrix_instance_f32 tmpX;
+	arm_matrix_instance_f32 tmpS;
 	arm_matrix_instance_f32 Y;
 	arm_matrix_instance_f32 YT;
 	arm_matrix_instance_f32 Yminus;
@@ -104,9 +106,9 @@ typedef struct CKF_FILTER_T{
 	arm_matrix_instance_f32 tmpY;
 }CKF_Filter;
 
-void CKF_New(CKF_Filter* CKF);
-void CKF_Init(CKF_Filter* CKF, float32_t *q, float32_t *gyro);
-void CKF_Update(CKF_Filter* CKF, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt);
-void CKF_GetAngle(CKF_Filter* CKF, float32_t* rpy);
+void CKF_New(CKF_Filter* ckf);
+void CKF_Init(CKF_Filter* ckf, float32_t *q, float32_t *gyro);
+void CKF_Update(CKF_Filter* ckf, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt);
+void CKF_GetAngle(CKF_Filter* ckf, float32_t* rpy);
 
 #endif

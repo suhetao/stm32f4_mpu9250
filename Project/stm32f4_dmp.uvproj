@@ -362,7 +362,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER STM32F40_41xxx ARM_MATH_CM4 __FPU_PRESENT MPU9250</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Application\Include;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc;..\miniIMU;..\miniIMU\FP</IncludePath>
+              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Application\Include;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\miniIMU;..\miniIMU\FP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

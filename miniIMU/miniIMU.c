@@ -27,9 +27,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //////////////////////////////////////////////////////////////////////////
 //
 //all parameters below need to be tune
-#define EKF_PQ_INITIAL 0.00125
-#define EKF_QQ_INITIAL 0.001
-#define EKF_RA_INITIAL 0.002
+#define EKF_PQ_INITIAL 0.001
+#define EKF_QQ_INITIAL 0.002
+#define EKF_RA_INITIAL 0.001
 
 #if EKF_STATE_DIM == 4
 #define EKF_MEASUREMENT_DIM 3
@@ -152,9 +152,13 @@ static float CBn[9];
 //
 static float PX[EKF_STATE_DIM * EKF_STATE_DIM];
 static float PXX[EKF_STATE_DIM * EKF_STATE_DIM];
-static float PY[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
+static float PXY[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 static float K[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 static float S[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
+//static float ST[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
+static float Qd[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
+static float Rd[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
+static float AQ[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 
 void EKF_IMUInit(float *accel, float *gyro)
 {
@@ -233,7 +237,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	q1 = X[1];
 	q2 = X[2];
 	q3 = X[3];
-
+	
 #if EKF_STATE_DIM == 4
 	/* F[0] = 1.0f; */ F[1] = neghalfdx; F[2] = neghalfdy; F[3] = neghalfdz;
 	F[4] = halfdx; /* F[5] = 1.0f; */ F[6] = neghalfdz;	F[7] = halfdy;
@@ -298,11 +302,14 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	H[14] = _2q0; H[15] = -_2q1; H[16] = -_2q2; H[17] = _2q3;
 #endif
 
-	Maxtrix_Mul_With_Transpose(P, EKF_STATE_DIM, EKF_STATE_DIM, H, EKF_MEASUREMENT_DIM, PY);
-	Maxtrix_Mul(H, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, PY, EKF_MEASUREMENT_DIM, S);
+	Maxtrix_Mul_With_Transpose(P, EKF_STATE_DIM, EKF_STATE_DIM, H, EKF_MEASUREMENT_DIM, PXY);
+	Maxtrix_Mul(H, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, PXY, EKF_MEASUREMENT_DIM, S);
 	Maxtrix_Add(S, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, R, S);
-	Maxtrix_Inverse(S, EKF_MEASUREMENT_DIM);
-	Maxtrix_Mul(PY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, S, EKF_MEASUREMENT_DIM, K);
+	//Maxtrix_Transpose(S, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, ST);
+	Matrix_Div(K, PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM,
+		S, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, Qd, Rd, AQ);
+	//Maxtrix_Inverse(S, EKF_MEASUREMENT_DIM);
+	//Maxtrix_Mul(PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, S, EKF_MEASUREMENT_DIM, K);
 
 	//state measurement update
 	//X = X + K * Y;
@@ -344,7 +351,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//P = P - K * H * P
 	//or
 	//P=(I - K*H)*P*(I - K*H)' + K*R*K'
-#if 1
+#if 0
 #if 0
 	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, H, EKF_STATE_DIM, PX);
 	Maxtrix_Sub(I, EKF_STATE_DIM, EKF_STATE_DIM, PX, PX);
@@ -359,8 +366,8 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	Maxtrix_Sub(I, EKF_STATE_DIM, EKF_STATE_DIM, PX, PX);
 	Maxtrix_Mul(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
 	Maxtrix_Mul_With_Transpose(PXX, EKF_STATE_DIM, EKF_STATE_DIM, PX, EKF_STATE_DIM, P);
-	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, R, EKF_MEASUREMENT_DIM, PY);
-	Maxtrix_Mul_With_Transpose(PY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, K, EKF_STATE_DIM, PX);
+	Maxtrix_Mul(K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, R, EKF_MEASUREMENT_DIM, PXY);
+	Maxtrix_Mul_With_Transpose(PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, K, EKF_STATE_DIM, PX);
 	Maxtrix_Add(P, EKF_STATE_DIM, EKF_STATE_DIM, PX, P);
 #endif
 }
