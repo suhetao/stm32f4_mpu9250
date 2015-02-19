@@ -22,146 +22,50 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #include "stm32f4_mpu9250.h"
+#include "stm32f4_spi.h"
 #include "stm32f4_delay.h"
 
+//////////////////////////////////////////////////////////////////////////
+//basic SPI driver for MPU9250
+static SPI_Driver mMPU9250 = {
+	SPI2, RCC_APB1PeriphClockCmd, RCC_APB1Periph_SPI2,
+	GPIOB, RCC_AHB1PeriphClockCmd, RCC_AHB1Periph_GPIOB,
+	GPIO_Pin_12, GPIO_Pin_13, GPIO_Pin_14, GPIO_Pin_15,
+	GPIO_PinSource13, GPIO_PinSource14, GPIO_PinSource15,	
+#ifdef SPIx_USE_DMA
+
+#endif
+	SPI_BaudRatePrescaler_32, GPIO_AF_SPI2
+};
+static SPI_Driver* pMPU9250 = &mMPU9250;
+//////////////////////////////////////////////////////////////////////////
+//
+#define MPU9250_SPIx_SendByte(byte) SPIx_SendByte(pMPU9250, byte);
+#define MPU9250_SPIx_SetDivisor(divisor) SPIx_SetDivisor(pMPU9250, divisor);
+
+//////////////////////////////////////////////////////////////////////////
+//init
 void MPU9250_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
-	SPI_InitTypeDef  SPI_InitStructure;
-
-	MPU9250_SPIx_CLK_INIT(MPU9250_SPIx_CLK, ENABLE);
-	//Enable SCK, MOSI and MISO GPIO clocks
-	MPU9250_SPIx_GPIO_CLK_INIT(MPU9250_SPIx_CS_GPIO_CLK
-		| MPU9250_SPIx_SCK_GPIO_CLK
-		| MPU9250_SPIx_MISO_GPIO_CLK
-		| MPU9250_SPIx_MOSI_GPIO_CLK, ENABLE);
-
-	//GPIO Deinitialisation
-	GPIO_DeInit(MPU9250_SPIx_SCK_GPIO_PORT);
-	GPIO_DeInit(MPU9250_SPIx_MISO_GPIO_PORT);
-	GPIO_DeInit(MPU9250_SPIx_MOSI_GPIO_PORT);
-
-	//Connect SPI pins to AF5
-	GPIO_PinAFConfig(MPU9250_SPIx_SCK_GPIO_PORT,
-		MPU9250_SPIx_SCK_SOURCE, MPU9250_SPIx_SCK_AF);
-	GPIO_PinAFConfig(MPU9250_SPIx_MISO_GPIO_PORT,
-		MPU9250_SPIx_MISO_SOURCE, MPU9250_SPIx_MISO_AF);    
-	GPIO_PinAFConfig(MPU9250_SPIx_MOSI_GPIO_PORT,
-		MPU9250_SPIx_MOSI_SOURCE, MPU9250_SPIx_MOSI_AF);
-
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-
-	//SPI SCK/MISO/MOSI pin configuration
-	GPIO_InitStructure.GPIO_Pin = MPU9250_SPIx_SCK_PIN
-		| MPU9250_SPIx_MOSI_PIN
-		| MPU9250_SPIx_MISO_PIN;
-	GPIO_Init(MPU9250_SPIx_MOSI_GPIO_PORT, &GPIO_InitStructure);
-
-	//Configure GPIO PIN for Chip select
-	GPIO_InitStructure.GPIO_Pin = MPU9250_SPIx_CS_PIN;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(MPU9250_SPIx_CS_GPIO_PORT, &GPIO_InitStructure);
-
-	//
-	MPU9250_Deselect();
-
-	//SPI configuration -------------------------------------------------------*/
-	SPI_I2S_DeInit(MPU9250_SPIx);
-	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
-	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
-	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
-	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_32; // 30/32 = 0.9375 MHz SPI Clock
-	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
-	SPI_InitStructure.SPI_CRCPolynomial = 7;
-	SPI_Init(MPU9250_SPIx, &SPI_InitStructure);
-
-	SPI_CalculateCRC(MPU9250_SPIx, DISABLE);
-
-	//Enable SPIx
-	SPI_Cmd(MPU9250_SPIx, ENABLE);
-	while (SPI_I2S_GetFlagStatus(MPU9250_SPIx, SPI_I2S_FLAG_TXE) == RESET);
-	SPI_I2S_ReceiveData(MPU9250_SPIx);
-}
-
-u8 MPU9250_SPIx_SendByte(u8 data)
-{
-	while (SPI_I2S_GetFlagStatus(MPU9250_SPIx, SPI_I2S_FLAG_TXE) == RESET);
-	SPI_I2S_SendData(MPU9250_SPIx, data);
-	while (SPI_I2S_GetFlagStatus(MPU9250_SPIx, SPI_I2S_FLAG_RXNE) == RESET);
-	return((uint8_t)SPI_I2S_ReceiveData(MPU9250_SPIx));
-}
-
-void MPU9250_SPIx_SetDivisor(u16 data)
-{
-	uint16_t tempRegister;
-	SPI_Cmd(MPU9250_SPIx, DISABLE);
-
-	tempRegister = MPU9250_SPIx->CR1;
-
-	switch (data)
-	{
-	case 2:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_2;
-		break;
-	case 4:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_4;
-		break;
-	case 8:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_8;
-		break;
-	case 16:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_16;
-		break;
-	case 32:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_32;
-		break;
-	case 64:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_64;
-		break;
-	case 128:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_128;
-		break;
-	case 256:
-		tempRegister &= MPU9250_SPIx_BR_CLEAR_MASK;
-		tempRegister |= SPI_BaudRatePrescaler_256;
-		break;
-	}
-
-	MPU9250_SPIx->CR1 = tempRegister;
-	SPI_Cmd(MPU9250_SPIx, ENABLE);
+	SPIx_Init(pMPU9250);
 }
 
 int MPU9250_SPIx_Write(u8 addr, u8 reg_addr, u8 data){
-	MPU9250_Select();
+	CHIP_SELECT(pMPU9250);
 	MPU9250_SPIx_SendByte(reg_addr);
 	MPU9250_SPIx_SendByte(data);
-	MPU9250_Deselect();
+	CHIP_DESELECT(pMPU9250);
 	return 0;
 }
 
 int MPU9250_SPIx_Writes(u8 addr, u8 reg_addr, u8 len, u8* data){
 	u32 i = 0;
-	MPU9250_Select();
+	CHIP_SELECT(pMPU9250);
 	MPU9250_SPIx_SendByte(reg_addr);
 	while(i < len){
 		MPU9250_SPIx_SendByte(data[i++]);
 	}
-	MPU9250_Deselect();
+	CHIP_DESELECT(pMPU9250);
 	return 0;
 }
 
@@ -170,10 +74,10 @@ u8 MPU9250_SPIx_Read(u8 addr, u8 reg_addr)
 	u8 dummy = 0;
 	u8 data = 0;
 
-	MPU9250_Select();
+	CHIP_SELECT(pMPU9250);
 	MPU9250_SPIx_SendByte(0x80 | reg_addr);
 	data = MPU9250_SPIx_SendByte(dummy);
-	MPU9250_Deselect();
+	CHIP_DESELECT(pMPU9250);
 	return data;
 }
 
@@ -181,12 +85,12 @@ int MPU9250_SPIx_Reads(u8 addr, u8 reg_addr, u8 len, u8* data){
 	u32 i = 0;
 	u8 dummy = 0x00;
 
-	MPU9250_Select();
+	CHIP_SELECT(pMPU9250);
 	MPU9250_SPIx_SendByte(MPU9250_I2C_READ | reg_addr);
 	while(i < len){
 		data[i++] = MPU9250_SPIx_SendByte(dummy);
 	}
-	MPU9250_Deselect();
+	CHIP_DESELECT(pMPU9250);
 	return 0;
 }
 

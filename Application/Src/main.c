@@ -21,8 +21,10 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "stm32f4_delay.h"
 #include "stm32f4_mpu9250.h"
+#include "stm32f4_serial.h"
+
+#include "stm32f4_delay.h"
 #include "stm32f4_rcc.h"
 #include "stm32f4_exti.h"
 
@@ -97,6 +99,7 @@ int main(void)
 {
 	//PLL_M PLL_N PLL_P PLL_Q
 	PLL_PARAMS pFreq120M = {12, 240, 2, 5};
+	PLL_PARAMS pFreq128M = {12, 256, 2, 6};
 	PLL_PARAMS pFreq168M = {12, 336, 2, 7};
 
 	s32 s32Result = 0;
@@ -104,8 +107,9 @@ int main(void)
 	u8 u8AccelFsr = 0;
 	u16 u16GyroRate = 0;
 	u16 u16GyroFsr = 0;
-	u16 u16DmpFeatures = DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO |
-		DMP_FEATURE_GYRO_CAL;
+	//u16 u16DmpFeatures = DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO |
+		//DMP_FEATURE_GYRO_CAL;
+	u16 u16DmpFeatures = DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_RAW_GYRO;
 
 	s16 s16Gyro[3] = {0}, s16Accel[3] = {0}, s16Mag[3] = {0};
 	float fRealGyro[3] = {0}, fRealAccel[3] = {0}, fRealMag[3] = {0};
@@ -126,15 +130,17 @@ int main(void)
 
 	unsigned long ulNowTime = 0;
 	unsigned long ulLastTime = 0;
+	unsigned long ulSendTime = 0;
 	float fDeltaTime = 0.0f;
 	u32 u32KFState = 0;
 
 	//Reduced frequency
-	//120 / 4 = 30Mhz APB1, 30/32 = 0.9375 MHz SPI Clock
+	//128 / 4 = 32Mhz APB1, 32/32 = 1MHz SPI Clock
 	//1Mhz SPI Clock for read/write
 	RCC_SystemCoreClockUpdate(pFreq120M);
 	Delay_Init();
 	MPU9250_Init();
+	Serial_Init();
 
 #ifdef USE_EKF
 	//Create a new EKF object;
@@ -173,7 +179,7 @@ int main(void)
 	Delay_Init();
 	MPU9250_Init();
 	//42Mhz APB1, 42/2 = 21 MHz SPI Clock
-	MPU9250_SPIx_SetDivisor(2);
+	MPU9250_SPIx_SetDivisor(SPI_BaudRatePrescaler_2);
 #endif
 	Interrupt_Init();
 
@@ -187,21 +193,22 @@ int main(void)
 			//so that you can't use I2C Master mode read/write from SPI at 20Mhz SPI Clock
 			//and dmp fifo can't use for Magnetometer, but you can use this function below
 			s32Result = mpu_get_compass_reg(s16Mag, &ulTimeStamp);
-
 			//must calibrate gryo, accel, magnetic data
 			//ned coordinate system
 			//todo
 			fRealGyro[0] = GYRO_TORAD(s16Gyro[0]);
 			fRealGyro[1] = GYRO_TORAD(s16Gyro[1]);
-			fRealGyro[2] = GYRO_TORAD(s16Gyro[2]);
+			fRealGyro[2] = -GYRO_TORAD(s16Gyro[2]);
 
 			fRealAccel[0] = s16Accel[0] / 16384.0f;
 			fRealAccel[1] = s16Accel[1] / 16384.0f;
 			fRealAccel[2] = s16Accel[2] / 16384.0f;
-
-			fRealMag[0] = s16Mag[0];
-			fRealMag[1] = s16Mag[1];
-			fRealMag[2] = s16Mag[2];
+			
+			if(!s32Result){
+				fRealMag[0] = s16Mag[0];
+				fRealMag[1] = s16Mag[1];
+				fRealMag[2] = s16Mag[2];
+			}
 
 			//q30 to float
 			fRealQ[0] = (float)lQuat[0] / 1073741824.0f;
@@ -223,6 +230,7 @@ int main(void)
 				FP_EKF_IMUInit(fRealAccel, fRealGyro);
 #endif				
 				ulLastTime = ulNowTime;
+				ulSendTime = ulNowTime;
 				u32KFState = 1;
 			}
 			else{
@@ -254,7 +262,13 @@ int main(void)
 			
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere
-
+			//1000 / 10 = 100HZ
+			if(ulNowTime - ulSendTime > 9){
+				Serial_Upload(s16Accel, s16Gyro, s16Mag, lQuat, 0, 0);
+				ulSendTime = ulNowTime;
+		}
+			
+			
 			ulLastTime = ulNowTime; 
 		}
 	}

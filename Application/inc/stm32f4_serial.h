@@ -21,22 +21,19 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef MINIIMU_H_
-#define MINIIMU_H_
-//////////////////////////////////////////////////////////////////////////
+#ifndef _STM32F4_SERIAL_H
+#define _STM32F4_SERIAL_H
+
+#include "stm32f4xx.h"
+
+#define PACKET_LENGTH (46)
+
+//low function
+void Serial_Init(void);
+void Serial_SendByte(uint8_t byte);
+void Serial_SendBytes(uint8_t* buffer, uint8_t length);
+
 //
-//#define EKF_STATE_DIM 4 //q0 q1 q2 q3
-//#define EKF_STATE_DIM 7 //q0 q1 q2 q3 wx wy wz
-#define EKF_STATE_DIM 7 //q0 q1 q2 q3 wxb wyb wzb
-#define EKF_MEASUREMENT_DIM 3
-
-#define EKF_HALFPI 1.5707963267948966192313216916398f
-#define EKF_PI 3.1415926535897932384626433832795f
-#define EKF_TWOPI 6.283185307179586476925286766559f
-#define EKF_TODEG(x) ((x) * 57.2957796f)
-
-void EKF_IMUInit(float *accel, float *gyro);
-void EKF_IMUUpdate(float *gyro, float *accel, float dt);
-void EKF_IMUGetAngle(float* rpy);
+void Serial_Upload(short accel[3], short gyro[3], short compass[3], long quat[4], long temperature, long pressure);
 
 #endif

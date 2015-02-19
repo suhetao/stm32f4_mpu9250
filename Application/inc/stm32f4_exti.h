@@ -21,22 +21,25 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef MINIIMU_H_
-#define MINIIMU_H_
-//////////////////////////////////////////////////////////////////////////
-//
-//#define EKF_STATE_DIM 4 //q0 q1 q2 q3
-//#define EKF_STATE_DIM 7 //q0 q1 q2 q3 wx wy wz
-#define EKF_STATE_DIM 7 //q0 q1 q2 q3 wxb wyb wzb
-#define EKF_MEASUREMENT_DIM 3
+#ifndef _STM32F4_EXTI_H
+#define _STM32F4_EXTI_H
 
-#define EKF_HALFPI 1.5707963267948966192313216916398f
-#define EKF_PI 3.1415926535897932384626433832795f
-#define EKF_TWOPI 6.283185307179586476925286766559f
-#define EKF_TODEG(x) ((x) * 57.2957796f)
+#include "stm32f4xx.h"
 
-void EKF_IMUInit(float *accel, float *gyro);
-void EKF_IMUUpdate(float *gyro, float *accel, float dt);
-void EKF_IMUGetAngle(float* rpy);
+//Define the Interrupt pin
+#define INTERRUPT_PIN                          GPIO_Pin_8   
+#define INTERRUPT_GPIO_PORT                    GPIOB            
+#define INTERRUPT_GPIO_CLK                     RCC_AHB1Periph_GPIOB
+#define INTERRUPT_EXTI_LINE                    EXTI_Line8
+#define INTERRUPT_EXTI_PORT_SOURCE             EXTI_PortSourceGPIOB
+#define INTERRUPT_EXTI_PIN_SOURCE              GPIO_PinSource8
+#define INTERRUPT_EDGE                         EXTI_Trigger_Rising 
+#define INTERRUPT_EXTI_IRQN                    EXTI9_5_IRQn
+
+#define INTERRUPT_EXTI_PREEMPTION_PRIORITY     14
+#define INTERRUPT_EXTI_SUB_PRIORITY            0
+
+void Interrupt_Init(void);
+u8 Interrupt_GetState(void);
 
 #endif

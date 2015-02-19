@@ -280,6 +280,120 @@ __inline int Maxtrix_Inverse(float *A, unsigned int n)
 	return 0;
 }
 
+__inline int Matrix_LU_Decomposition(float* pSourceDestLU, int* pPerm, unsigned int n)
+{
+  int	i, j, k, iC;
+  int	iMax;
+  int	retNumPerm = 0;
+  short int sTmp;
+	// Pivot Variables
+  float fP1, fP2;
+	float fLK, fKK;
+
+  iC = n;
+
+  for (i = 0; i < iC; ++i){
+		pPerm[i] = i;
+	}
+
+  // Partial Pivoting
+  for (k = 0; k < iC; ++k){
+    for (i = k, iMax = k, fP1 = 0.0f; i < iC; ++i){
+      // Local ABS
+			fLK = pSourceDestLU[pPerm[i] * iC + k];
+      if (fLK > 0){
+        fP2 = fLK;
+			}
+      else{
+        fP2 = - fLK;
+			}
+      if (fP2 > fP1){
+        fP1 = fP2;
+        iMax = i;
+      }
+    }
+    // Row exchange, update permutation vector
+    if (k != iMax){
+      retNumPerm++;
+      sTmp = pPerm[k];
+      pPerm[k] = pPerm[iMax];
+      pPerm[iMax] = sTmp;
+    }
+
+    // Suspected Singular Matrix
+		fKK = *(pSourceDestLU + pPerm[k] * iC + k);
+    if (fKK == 0.0f){
+      return -1;
+		}
+
+    for (i = k + 1; i < iC; ++i){
+      // Calculate Mat [i][j]
+			fLK = *(pSourceDestLU + pPerm[i] * iC + k);
+      *(pSourceDestLU + pPerm[i] * iC + k) = fLK / fKK;
+
+      // Elimination
+      for (j = k + 1; j < iC; ++j){
+        *(pSourceDestLU + pPerm[i] * iC + j) -=
+          *(pSourceDestLU + pPerm[i] * iC + k) * *(pSourceDestLU + pPerm[k] * iC + j);
+      }
+    }
+  }
+  return retNumPerm;
+}
+
+__inline void Maxtrix_BackSubs(float* pSourceLU, float* pSourceDestColumn,
+	int* pPerm,  int iCols, int iResultCol, float* pDest)
+{
+  int i, j, k, iC;
+	int permK, permI;
+  float fSum, fTmp;
+
+  iC = iCols;
+
+  for (k = 0; k < iC; ++k){
+		permK = pPerm[k] * iC;
+    for (i = k + 1; i < iC; ++i){
+			permI = pPerm[i] * iC;
+      pSourceDestColumn[permI] -= pSourceLU[permI + k] * pSourceDestColumn[permK];
+		}
+	}
+	i = (iC - 1);
+	j = i * iC;
+	k = pPerm[i] * iC;
+  pDest[j + iResultCol] = pSourceDestColumn[k] /pSourceLU[k + i];
+
+  for (k = iC - 2; k >= 0; k--){
+    fSum = 0.0f;
+		permK = pPerm[k] * iC;
+    for (j = k + 1; j < iC; ++j){
+      fSum += pSourceLU[permK + j] * pDest[j * iC + iResultCol];
+		}
+    fTmp = pSourceDestColumn[permK] - fSum;
+    pDest[k * iC + iResultCol] = fTmp / pSourceLU[permK + k];
+  }
+}
+
+__inline int Maxtrix_Inv(float *A, float *B, int* P, unsigned int n, float* pDest)
+{
+	int i, j, k;
+	int jC;
+	// LU Decomposition and check for Singular Matrix
+  if (Matrix_LU_Decomposition(A, P, n) == -1){
+		return -1;
+  }
+	for (i = 0; i < n; ++i){
+    for (j = 0; j < n; j++){
+			jC = j * n;
+      for (k = 0; j < n; j++){
+          B[jC + k] = 0.0f;
+			}
+		}
+    B[i * n] = 1.0f;
+    Maxtrix_BackSubs(A, B, P, n, i, pDest);
+  }
+	return 0;
+}
+
 //need optimization!!
 __inline int Maxtrix_QR_DecompositionT(float *A, unsigned int m, unsigned int n,
 									  float *Q, unsigned int numRowsQ, unsigned int numColsQ,

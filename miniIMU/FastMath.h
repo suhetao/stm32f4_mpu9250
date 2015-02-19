@@ -83,7 +83,9 @@ __inline float FastLn(float x)
 }
 
 //translate from the DSP instruction of a DSP Library.
+#ifndef PI
 #define PI (3.1415926535897932384626433832795f)
+#endif
 #define PI_2 (1.5707963267948966192313216916398f)
 #define PI_3 (1.0471975511965977461542144610932f)
 #define PI_4 (0.78539816339744830961566084581988f)

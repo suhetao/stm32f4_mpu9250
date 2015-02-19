@@ -21,22 +21,37 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef MINIIMU_H_
-#define MINIIMU_H_
-//////////////////////////////////////////////////////////////////////////
-//
-//#define EKF_STATE_DIM 4 //q0 q1 q2 q3
-//#define EKF_STATE_DIM 7 //q0 q1 q2 q3 wx wy wz
-#define EKF_STATE_DIM 7 //q0 q1 q2 q3 wxb wyb wzb
-#define EKF_MEASUREMENT_DIM 3
+#ifndef _STM32F4_COMMON_H
+#define _STM32F4_COMMON_H
 
-#define EKF_HALFPI 1.5707963267948966192313216916398f
-#define EKF_PI 3.1415926535897932384626433832795f
-#define EKF_TWOPI 6.283185307179586476925286766559f
-#define EKF_TODEG(x) ((x) * 57.2957796f)
+#include "stm32f4xx.h"
 
-void EKF_IMUInit(float *accel, float *gyro);
-void EKF_IMUUpdate(float *gyro, float *accel, float dt);
-void EKF_IMUGetAngle(float* rpy);
+__inline void FastMemCpy(uint8_t* pDest, uint8_t* pSrc, uint8_t length)
+{
+	uint32_t slice = length & 0x03;
+	uint32_t intnum = length >> 2;
+	
+#if 1
+	uint32_t * pintsrc = (uint32_t *)pSrc;
+	uint32_t * pintdst = (uint32_t *)pDest;
+		
+	while(intnum--){
+		*pintdst++ = *pintsrc++;
+	}
+	while(slice--){
+		*((uint8_t *)pintdst++) = *((uint8_t *)pintsrc++);  
+	}
+#else
+	while(intnum--){
+		*pDest++ = *pSrc++;
+		*pDest++ = *pSrc++;
+		*pDest++ = *pSrc++;
+		*pDest++ = *pSrc++;
+	}
+	while(slice--){
+		*pDest++ = *pSrc++;
+	}
+#endif
+}
 
 #endif

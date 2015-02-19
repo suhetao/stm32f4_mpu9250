@@ -776,7 +776,9 @@ int mpu_init(struct int_param_s *int_param)
 		return -1;
 	if (mpu_set_lpf(42))
 		return -1;
-	if (mpu_set_sample_rate(50))
+// modified by hetao.su
+//if (mpu_set_sample_rate(50))
+	if (mpu_set_sample_rate(100))
 		return -1;
 	if (mpu_configure_fifo(0))
 		return -1;

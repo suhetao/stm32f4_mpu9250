@@ -362,7 +362,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER STM32F40_41xxx ARM_MATH_CM4 __FPU_PRESENT MPU9250</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Application\Include;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\miniIMU;..\miniIMU\FP</IncludePath>
+              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Drivers\inc;..\Application\inc;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\miniIMU;..\miniIMU\FP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -436,14 +436,9 @@
               <FilePath>..\Application\Src\stm32f4_rcc.c</FilePath>
             </File>
             <File>
-              <FileName>miniIMU.c</FileName>
+              <FileName>stm32f4_serial.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\miniIMU\miniIMU.c</FilePath>
-            </File>
-            <File>
-              <FileName>FP_miniIMU.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\miniIMU\FP\FP_miniIMU.c</FilePath>
+              <FilePath>..\Application\src\stm32f4_serial.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -480,6 +475,31 @@
               <FileType>1</FileType>
               <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_spi.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4xx_crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_crc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_usart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -489,31 +509,6 @@
               <FileName>startup_stm32f40_41xxx.s</FileName>
               <FileType>2</FileType>
               <FilePath>..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup_stm32f40_41xxx.s</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Include</GroupName>
-          <Files>
-            <File>
-              <FileName>stm32f4_delay.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Application\Include\stm32f4_delay.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_conf.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Application\Include\stm32f4xx_conf.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4_exti.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Application\Include\stm32f4_exti.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4_mpu9250.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Application\Include\stm32f4_mpu9250.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -550,6 +545,16 @@
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\UKF.c</FilePath>
             </File>
+            <File>
+              <FileName>miniIMU.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\miniIMU.c</FilePath>
+            </File>
+            <File>
+              <FileName>FP_miniIMU.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\FP\FP_miniIMU.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -569,6 +574,21 @@
               <FileName>arm_cortexM4lf_math.lib</FileName>
               <FileType>4</FileType>
               <FilePath>..\Libraries\CMSIS\DSP_Lib\Lib\arm_cortexM4lf_math.lib</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Drivers</GroupName>
+          <Files>
+            <File>
+              <FileName>stm32f4_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\src\stm32f4_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\src\stm32f4_usart.c</FilePath>
             </File>
           </Files>
         </Group>
