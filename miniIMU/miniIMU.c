@@ -138,7 +138,6 @@ static float KA[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 
 static float SA[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
 
-
 //static float Qd[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
 //static float Rd[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
 //static float AQ[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
@@ -199,14 +198,14 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	float q0, q1, q2, q3;
 	//
 	float SB[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM] = {0};
-int SP[EKF_MEASUREMENT_DIM] = {0};
-float SI[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM] = {0};
+	int SP[EKF_MEASUREMENT_DIM] = {0};
+	float SI[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM] = {0};
 	//////////////////////////////////////////////////////////////////////////
 #if EKF_STATE_DIM == 4
 	halfdx = halfdt * gyro[0];
 	halfdy = halfdt * gyro[1];
 	halfdz = halfdt * gyro[2];
-#else
+#else //EKF_STATE_DIM == 7
 	halfdx = halfdt * (gyro[0] - X[4]);
 	halfdy = halfdt * (gyro[1] - X[5]);
 	halfdz = halfdt * (gyro[2] - X[6]);
@@ -269,9 +268,15 @@ float SI[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM] = {0};
 	_2q2 = 2.0f * X[2];
 	_2q3 = 2.0f * X[3];
 
+#if EKF_STATE_DIM == 4
 	HA[0] = _2q2; HA[1] = -_2q3; HA[2] = _2q0; HA[3] = -_2q1;
 	HA[4] = -_2q1; HA[5] = -_2q0; HA[6] = -_2q3; HA[7] = -_2q2;
 	HA[8] = -_2q0; HA[9] = _2q1; HA[10] = _2q2; HA[11] = -_2q3;
+#else //EKF_STATE_DIM == 7
+	HA[0] = _2q2; HA[1] = -_2q3; HA[2] = _2q0; HA[3] = -_2q1;
+	HA[8] = -_2q1; HA[9] = -_2q0; HA[10] = -_2q3; HA[11] = -_2q2;
+	HA[14] = -_2q0; HA[15] = _2q1; HA[16] = _2q2; HA[17] = -_2q3;
+#endif
 
 	Maxtrix_Mul_With_Transpose(P, EKF_STATE_DIM, EKF_STATE_DIM, HA, EKF_MEASUREMENT_DIM, PXY);
 	Maxtrix_Mul(HA, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, PXY, EKF_MEASUREMENT_DIM, SA);

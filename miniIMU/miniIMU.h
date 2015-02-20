@@ -26,9 +26,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //////////////////////////////////////////////////////////////////////////
 //
 //#define EKF_STATE_DIM 4 //q0 q1 q2 q3
-//#define EKF_STATE_DIM 7 //q0 q1 q2 q3 wx wy wz
 #define EKF_STATE_DIM 7 //q0 q1 q2 q3 wxb wyb wzb
-#define EKF_MEASUREMENT_DIM 3
+#define EKF_MEASUREMENT_DIM 3 //ax ay az
 
 #define EKF_HALFPI 1.5707963267948966192313216916398f
 #define EKF_PI 3.1415926535897932384626433832795f

@@ -28,6 +28,30 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //////////////////////////////////////////////////////////////////////////
 //
+
+__inline void FP_Matrix_Copy(Q16 *pSrc, int numRows, int numCols, Q16 *pDst)
+{
+	Q16 *pIn = pSrc;
+	Q16 *pOut = pDst;
+	unsigned int numSamples = numRows * numCols;
+	unsigned int blkCnt = numSamples >> 2u;
+
+	//cortex-m3's speed optimization
+	while(blkCnt > 0u){
+		(*pOut++) = (*pIn++);
+		(*pOut++) = (*pIn++);
+		(*pOut++) = (*pIn++);
+		(*pOut++) = (*pIn++);
+		blkCnt--;
+	}
+	blkCnt = numSamples & 0x03u;
+
+	while(blkCnt > 0u){
+		(*pOut++) = (*pIn++);
+		blkCnt--;
+	}
+}
+
 __inline int FP_Maxtrix_Add(Q16 *pSrcA, unsigned short numRows, unsigned short numCols, Q16 *pSrcB, Q16 *pDst)
 {
 	Q16 *pIn1 = pSrcA;
@@ -47,11 +71,11 @@ __inline int FP_Maxtrix_Add(Q16 *pSrcA, unsigned short numRows, unsigned short n
 		inA1 = pIn1[0];
 		inB1 = pIn2[0];
 		inA2 = pIn1[1];
-		out1 = FP_ADD(inA1, inB1);
+		out1 = FP_ADDS(inA1, inB1);
 
 		inB2 = pIn2[1];
 		inA1 = pIn1[2];
-		out2 = FP_ADD(inA2, inB2);
+		out2 = FP_ADDS(inA2, inB2);
 
 		inB1 = pIn2[2];
 		pOut[0] = out1;
@@ -59,8 +83,8 @@ __inline int FP_Maxtrix_Add(Q16 *pSrcA, unsigned short numRows, unsigned short n
 
 		inA2 = pIn1[3];
 		inB2 = pIn2[3];
-		out1 = FP_ADD(inA1, inB1);
-		out2 = FP_ADD(inA2, inB2);
+		out1 = FP_ADDS(inA1, inB1);
+		out2 = FP_ADDS(inA2, inB2);
 
 		pOut[2] = out1;
 		pOut[3] = out2;
@@ -75,7 +99,7 @@ __inline int FP_Maxtrix_Add(Q16 *pSrcA, unsigned short numRows, unsigned short n
 
 	while(blkCnt > 0u){
 		//C(m,n) = A(m,n) + B(m,n)
-		*pOut++ = FP_ADD((*pIn1++), (*pIn2++));
+		*pOut++ = FP_ADDS((*pIn1++), (*pIn2++));
 
 		blkCnt--;
 	}
@@ -101,11 +125,11 @@ __inline int FP_Maxtrix_Sub(Q16 *pSrcA, unsigned short numRows, unsigned short n
 		inA1 = pIn1[0];
 		inB1 = pIn2[0];
 		inA2 = pIn1[1];
-		out1 = FP_SUB(inA1, inB1);
+		out1 = FP_SUBS(inA1, inB1);
 
 		inB2 = pIn2[1];
 		inA1 = pIn1[2];
-		out2 = FP_SUB(inA2, inB2);
+		out2 = FP_SUBS(inA2, inB2);
 
 		inB1 = pIn2[2];
 		pOut[0] = out1;
@@ -113,8 +137,8 @@ __inline int FP_Maxtrix_Sub(Q16 *pSrcA, unsigned short numRows, unsigned short n
 
 		inA2 = pIn1[3];
 		inB2 = pIn2[3];
-		out1 = FP_SUB(inA1, inB1);
-		out2 = FP_SUB(inA2, inB2);
+		out1 = FP_SUBS(inA1, inB1);
+		out2 = FP_SUBS(inA2, inB2);
 
 		pOut[2] = out1;
 		pOut[3] = out2;
@@ -129,255 +153,184 @@ __inline int FP_Maxtrix_Sub(Q16 *pSrcA, unsigned short numRows, unsigned short n
 
 	while(blkCnt > 0u){
 		//C(m,n) = A(m,n) - B(m,n)
-		*pOut++ = FP_SUB((*pIn1++), (*pIn2++));
+		*pOut++ = FP_SUBS((*pIn1++), (*pIn2++));
 
 		blkCnt--;
 	}
 	return 0;
 }
 
-__inline int FP_Maxtrix_Mul(Q16 *pSrcA, unsigned short numRowsA, unsigned short numColsA, Q16 *pSrcB, unsigned short numColsB, Q16 *pDst)
+__inline int FP_Maxtrix_Mul(Q16 *A, int nrows, int ncols, Q16 *B, int mcols, Q16 *C)
 {
-	Q16 *pIn1 = pSrcA;
-	Q16 *pIn2 = pSrcB;
-	Q16 *pInA = pSrcA;
-	Q16 *pOut = pDst;
-	Q16 *px;
-
-	Q16 *pInB = pSrcB;
-	uint16_t col, i = 0u, row = numRowsA, colCnt;
+	Q16 *pB;
+	Q16 *p_B;
+	int i,j,k;
 	int __al, __ah;
 
-	do{
-		px = pOut + i;
-		col = numColsB;
-		pIn2 = pSrcB;
-		do{
-		
-			__al = __ah = 0;
-			pIn1 = pInA;
-			colCnt = numColsA;
-			while(colCnt > 0u){
-				//c(m,n) = a(1,1)*b(1,1) + a(1,2) * b(2,1) + .... + a(m,p)*b(p,n)
-				//cortex-m3's instruction assembly optimization
-				//sum += *pIn1++ * (*pIn2);
+	for (i = 0; i < nrows; A += ncols, i++){
+		for (p_B = B, j = 0; j < mcols; C++, p_B++, j++) {
+			pB = p_B;
+			//*C = 0;
+			__al = 0; __ah = 0;
+			for (k = 0; k < ncols; pB += mcols, k++){
+				//*C += *(A+k) * *pB;
 				__asm{
-					smlal __al, __ah, *pIn1++, *pIn2;
+					smlal __al, __ah, *(A+k), *pB;
 				}
-				pIn2 += numColsB;
-				colCnt--;
 			}
-			//cortex-m3's instruction assembly optimization
-			//*px++ = sum;
 			__asm{
 				lsls __ah, __ah, #16;
-				orr *px++, __ah, __al, lsr #16;
+				orr *C, __ah, __al, lsr #16;
 			}
-			col--;
-			pIn2 = pInB + (numColsB - col);
-
-		} while(col > 0u);
-		i = i + numColsB;
-		pInA = pInA + numColsA;
-		row--;
-
-	} while(row > 0u);
+		}
+	}
 	return 0;
 }
 
-__inline int FP_Maxtrix_Trans(Q16 *pSrc, unsigned short nRows, unsigned short nCols, Q16 *pDst)
+__inline void FP_Maxtrix_Mul_With_Transpose(Q16 *A, int nrows, int ncols, Q16 *B, int mrows, Q16 *C) 
 {
-	Q16 *pIn = pSrc;
-	Q16 *pOut = pDst;
-	Q16 *px;
+	int i,j,k;
+	Q16 *pA;
+	Q16 *pB;
+	int __al, __ah;
 
-	unsigned short blkCnt, i = 0u, row = nRows;
-
-	do{
-		blkCnt = nCols >> 2;
-		px = pOut + i;
-
-		while(blkCnt > 0u){
-			*px = *pIn++;
-			px += nRows;
-			*px = *pIn++;
-			px += nRows;
-			*px = *pIn++;
-			px += nRows;
-			*px = *pIn++;
-			px += nRows;
-			blkCnt--;
+	for (i = 0; i < nrows; A += ncols, i++){
+		for (pB = B, j = 0; j < mrows; C++, j++){
+			__al = 0; __ah = 0;
+			for (pA = A, /* ,*C = 0 */k  = 0; k < ncols; k++){
+				//*C += *pA++ * *pB++;
+				__asm{
+					smlal __al, __ah, *pA++, *pB++;
+				}
+			}
+			__asm{
+				lsls __ah, __ah, #16;
+				orr *C, __ah, __al, lsr #16;
+			}
 		}
-		blkCnt = nCols & 0x03u;
-		while(blkCnt > 0u){
-			*px = *pIn++;
-			px += nRows;
-			blkCnt--;
+	}
+}
+
+__inline int FP_Matrix_LU_Decomposition(Q16* pSourceDestLU, int* pPerm, int n)
+{
+  int	i, j, k, iC;
+  int	iMax;
+  int	retNumPerm = 0;
+  short int sTmp;
+	// Pivot Variables
+  Q16 qP1, qP2;
+	Q16 qLK, qKK;
+
+  iC = n;
+
+  for (i = 0; i < iC; ++i){
+		pPerm[i] = i;
+	}
+
+  // Partial Pivoting
+  for (k = 0; k < iC; ++k){
+    for (i = k, iMax = k, qP1 = 0; i < iC; ++i){
+      // Local ABS
+			qLK = pSourceDestLU[pPerm[i] * iC + k];
+      if (qLK > 0){
+        qP2 = qLK;
+			}
+      else{
+        qP2 = -qLK;
+			}
+      if (qP2 > qP1){
+        qP1 = qP2;
+        iMax = i;
+      }
+    }
+    // Row exchange, update permutation vector
+    if (k != iMax){
+      retNumPerm++;
+      sTmp = pPerm[k];
+      pPerm[k] = pPerm[iMax];
+      pPerm[iMax] = sTmp;
+    }
+
+    // Suspected Singular Matrix
+		qKK = *(pSourceDestLU + pPerm[k] * iC + k);
+    if (qKK == 0){
+      return -1;
 		}
 
-		i++;
-		row--;
-	} while(row > 0u);
+    for (i = k + 1; i < iC; ++i){
+      // Calculate Mat [i][j]
+			qLK = *(pSourceDestLU + pPerm[i] * iC + k);
+      *(pSourceDestLU + pPerm[i] * iC + k) = FP_SDIV(qLK, qKK);
+
+      // Elimination
+      for (j = k + 1; j < iC; ++j){
+        *(pSourceDestLU + pPerm[i] * iC + j) -=
+          FP_SMUL(*(pSourceDestLU + pPerm[i] * iC + k), *(pSourceDestLU + pPerm[k] * iC + j));
+      }
+    }
+  }
+  return retNumPerm;
+}
+
+__inline void FP_Maxtrix_BackSubs(Q16* pSourceLU, Q16* pSourceDestColumn,
+	int* pPerm,  int iCols, int iResultCol, Q16* pDest)
+{
+  int i, j, k, iC;
+	int permK, permI;
+  Q16 qSum, qTmp;
+	int __al, __ah;
+
+  iC = iCols;
+
+  for (k = 0; k < iC; ++k){
+		permK = pPerm[k] * iC;
+    for (i = k + 1; i < iC; ++i){
+			permI = pPerm[i] * iC;
+      pSourceDestColumn[permI] -= FP_SMUL(pSourceLU[permI + k], pSourceDestColumn[permK]);
+		}
+	}
+	i = (iC - 1);
+	j = i * iC;
+	k = pPerm[i] * iC;
+  pDest[j + iResultCol] = FP_SDIV(pSourceDestColumn[k], pSourceLU[k + i]);
+
+  for (k = iC - 2; k >= 0; k--){
+		__al = 0;__ah = 0;
+		permK = pPerm[k] * iC;
+    for (j = k + 1; j < iC; ++j){
+      //qSum += pSourceLU[permK + j] * pDest[j * iC + iResultCol];
+			__asm{
+					smlal __al, __ah, pSourceLU[permK + j], pDest[j * iC + iResultCol];
+				}
+		}
+		__asm{
+			lsls __ah, __ah, #16;
+			orr qSum, __ah, __al, lsr #16;
+		}
+    qTmp = FP_SUBS(pSourceDestColumn[permK], qSum);
+    pDest[k * iC + iResultCol] = FP_SDIV(qTmp, pSourceLU[permK + k]);
+  }
+}
+
+__inline int FP_Maxtrix_Inv(Q16 *A, Q16 *B, int* P, int n, Q16* pDest)
+{
+	int i, j, k;
+	int jC;
+	// LU Decomposition and check for Singular Matrix
+  if(FP_Matrix_LU_Decomposition(A, P, n) == -1){
+		return -1;
+  }
+	for (i = 0; i < n; ++i){
+    for (j = 0; j < n; j++){
+			jC = j * n;
+      for (k = 0; j < n; j++){
+          B[jC + k] = 0;
+			}
+		}
+    B[i * n] = Q16_One;
+    FP_Maxtrix_BackSubs(A, B, P, n, i, pDest);
+  }
 	return 0;
 }
-
-__inline int FP_Maxtrix_Inverse(Q16 *pSrc, unsigned int numRows, unsigned int numCols, Q16 *pDst)
-{
-	Q16 *pIn = pSrc;
-	Q16 *pOut = pDst;
-	Q16 *pInT1, *pInT2;
-	Q16 *pInT3, *pInT4;
-	Q16 *pPivotRowIn, *pPRT_in, *pPivotRowDst, *pPRT_pDst;
-
-	Q16 maxC;
-	int status = 0;
-	Q16 Xchg, in = 0, in1;
-	unsigned int i, rowCnt, flag = 0u, j, loopCnt, k, l;
-
-	pInT2 = pOut;
-	rowCnt = numRows;
-
-	while(rowCnt > 0u){
-		j = numRows - rowCnt;
-		while(j > 0u){
-			*pInT2++ = 0;
-			j--;
-		}
-		*pInT2++ = Q16_One;
-		j = rowCnt - 1u;
-		while(j > 0u){
-			*pInT2++ = 0;
-			j--;
-		}
-		rowCnt--;
-	}
-	loopCnt = numCols;
-	l = 0u;
-
-	while(loopCnt > 0u){
-		pInT1 = pIn + (l * numCols);
-		pInT3 = pOut + (l * numCols);
-		in = *pInT1;
-		k = 1u;
-		maxC = 0;
-		for (i = 0; i < numRows; i++){
-			maxC = *pInT1 > 0 ? (*pInT1 > maxC ? *pInT1 : maxC) : (-*pInT1 > maxC ? -*pInT1 : maxC);
-			pInT1 += numCols;
-		}
-		if(maxC == 0){
-			status = -1;
-			break;
-		}
-		pInT1 -= numRows * numCols;
-		if( (in > 0 ? in : -in) != maxC){
-			i = numRows - (l + 1u);
-			while(i > 0u){
-				pInT2 = pInT1 + (numCols * l);
-				pInT4 = pInT3 + (numCols * k);
-
-				if((*pInT2 > 0 ? *pInT2: -*pInT2) == maxC){
-					j = numCols - l;
-
-					while(j > 0u){
-						Xchg = *pInT2;
-						*pInT2++ = *pInT1;
-						*pInT1++ = Xchg;
-						j--;
-					}
-					j = numCols;
-
-					while(j > 0u){
-						Xchg = *pInT4;
-						*pInT4++ = *pInT3;
-						*pInT3++ = Xchg;
-						j--;
-					}
-					flag = 1u;
-					break;
-				}
-				k++;
-				i--;
-			}
-		}
-		if((flag != 1u) && (in == 0)){
-			status = -1;
-			break;
-		}
-
-		pPivotRowIn = pIn + (l * numCols);
-		pPivotRowDst = pOut + (l * numCols);
-
-		pInT1 = pPivotRowIn;
-		pInT2 = pPivotRowDst;
-		in = *pPivotRowIn;
-		j = (numCols - l);
-
-		while(j > 0u){
-			in1 = *pInT1;
-			//*pInT1++ = in1 / in;
-			*pInT1++ = FP_SDIV(in1, in);
-			j--;
-		}
-		j = numCols;
-
-		while(j > 0u){
-			in1 = *pInT2;
-			//*pInT2++ = in1 / in;
-			*pInT2++ = FP_SDIV(in1, in);
-			j--;
-		}
-		pInT1 = pIn;
-		pInT2 = pOut;
-
-		i = 0u;
-		k = numRows;
-
-		while(k > 0u){
-			if(i == l){
-				pInT1 += numCols - l;
-
-				pInT2 += numCols;
-			}
-			else{
-				in = *pInT1;
-
-				pPRT_in = pPivotRowIn;
-				pPRT_pDst = pPivotRowDst;
-
-				j = (numCols - l);
-
-				while(j > 0u){
-					in1 = *pInT1;
-					//*pInT1++ = in1 - (in * *pPRT_in++);
-					*pInT1++ = in1 - FP_SMUL(in, *pPRT_in++);
-					j--;
-				}
-				j = numCols;
-
-				while(j > 0u){
-					in1 = *pInT2;
-					//*pInT2++ = in1 - (in * *pPRT_pDst++);
-					*pInT2++ = in1 - FP_SMUL(in, *pPRT_pDst++);
-					j--;
-				}
-
-			}
-			pInT1 = pInT1 + l;
-			k--;
-			i++;
-		}
-		pIn++;
-		loopCnt--;
-		l++;
-	}
-	status = 0;
-
-	if((flag != 1u) && (in == 0.0f)){
-		status = -1;
-	}
-
-	return status;
-}
-
 
 #endif

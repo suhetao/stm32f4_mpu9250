@@ -35,8 +35,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GYRO_TORAD(x) (((float)(x)) * 0.00106422515365507901031932363932f)
 
 //uncomment one
-#define USE_6AXIS_EKF
-//#define USE_6AXIS_FP_EKF
+//#define USE_6AXIS_EKF
+#define USE_6AXIS_FP_EKF
 //#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
@@ -137,11 +137,10 @@ int main(void)
 	//Reduced frequency
 	//128 / 4 = 32Mhz APB1, 32/32 = 1MHz SPI Clock
 	//1Mhz SPI Clock for read/write
-	RCC_SystemCoreClockUpdate(pFreq120M);
+	RCC_SystemCoreClockUpdate(pFreq128M);
 	Delay_Init();
 	MPU9250_Init();
-	Serial_Init();
-
+	
 #ifdef USE_EKF
 	//Create a new EKF object;
 	EKF_New(&ekf);
@@ -152,7 +151,6 @@ int main(void)
 	//Create a new CKF object;
 	CKF_New(&ckf);
 #endif
-
 	//////////////////////////////////////////////////////////////////////////
 	//Init DMP
 	s32Result = mpu_init(&pInitParam);
@@ -182,6 +180,7 @@ int main(void)
 	MPU9250_SPIx_SetDivisor(SPI_BaudRatePrescaler_2);
 #endif
 	Interrupt_Init();
+	Serial_Init();
 
 	for(;;){
 		if (Interrupt_GetState()){
@@ -258,17 +257,14 @@ int main(void)
 			EKF_IMUGetAngle(fRPY);
 #elif defined USE_6AXIS_FP_EKF
 			FP_EKF_IMUGetAngle(fRPY);
-#endif	
-			
+#endif
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere
 			//1000 / 10 = 100HZ
 			if(ulNowTime - ulSendTime > 9){
 				Serial_Upload(s16Accel, s16Gyro, s16Mag, lQuat, 0, 0);
 				ulSendTime = ulNowTime;
-		}
-			
-			
+			}
 			ulLastTime = ulNowTime; 
 		}
 	}
