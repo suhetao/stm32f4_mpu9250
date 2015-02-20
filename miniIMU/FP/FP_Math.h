@@ -428,7 +428,7 @@ __inline float FastSqrt(float x)
 //////////////////////////////////////////////////////////////////////////
 //translate from google's skia fixed-point dsp Library.
 //
-#define TO_FLOAT_DEGREE(x) ((x) * 0.000874264215087890625f)
+#define TO_FLOAT_DEGREE(x) ((float)(x) * 0.000874264215087890625f)
 
 #define Q16_TWOPI 411775
 #define Q16_PI 205887
