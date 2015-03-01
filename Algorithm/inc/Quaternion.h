@@ -24,6 +24,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _QUATERNION_H_
 #define _QUATERNION_H_
 
+#include "FastMath.h"
+
 __inline void Quaternion_Add(float *r, float *a, float *b)
 {
 	r[0] = a[0] + b[0];
@@ -66,7 +68,7 @@ __inline void Quaternion_Scalar(float *r, float *q, float scalar)
 
 __inline void Quaternion_Normalize(float *q)
 {
-	float norm = q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
+	float norm = FastSqrtI(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
 	q[0] *= norm;
 	q[1] *= norm;
 	q[2] *= norm;

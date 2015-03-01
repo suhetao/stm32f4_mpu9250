@@ -23,7 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "UKF.h"
 #include "FastMath.h"
+#include "Quaternion.h"
 
+#define USE_4TH_RUNGE_KUTTA
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune
 #define UKF_PQ_INITIAL 0.00001
@@ -182,6 +184,13 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	//time update
 	//unscented transformation of process
 	arm_mat_getcolumn_f32(&ukf->XSP, tmpX, 0);
+#ifdef USE_4TH_RUNGE_KUTTA
+	tmpQ[0] = 0;
+	tmpQ[0] = tmpX[4];
+	tmpQ[0] = tmpX[5];
+	tmpQ[0] = tmpX[6];
+	Quaternion_RungeKutta4(tmpX, tmpQ, dt, 1);
+#else
 	//
 	halfdx = halfdt * tmpX[4];
 	halfdy = halfdt * tmpX[5];
@@ -206,6 +215,7 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	tmpX[1] *= norm;
 	tmpX[2] *= norm;
 	tmpX[3] *= norm;
+#endif
 	//
 	arm_mat_setcolumn_f32(&ukf->XSP, tmpX, 0);
 	for(row = 0; row < UKF_STATE_DIM; row++){
@@ -215,6 +225,13 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 		//
 		arm_mat_getcolumn_f32(&ukf->XSP, tmpX, col);
 		//
+#ifdef USE_4TH_RUNGE_KUTTA
+		tmpQ[0] = 0;
+		tmpQ[0] = tmpX[4];
+		tmpQ[0] = tmpX[5];
+		tmpQ[0] = tmpX[6];
+		Quaternion_RungeKutta4(tmpX, tmpQ, dt, 1);
+#else
 		halfdx = halfdt * tmpX[4];
 		halfdy = halfdt * tmpX[5];
 		halfdz = halfdt * tmpX[6];
@@ -238,6 +255,7 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 		tmpX[1] *= norm;
 		tmpX[2] *= norm;
 		tmpX[3] *= norm;
+#endif
 		//
 		arm_mat_setcolumn_f32(&ukf->XSP, tmpX, col);
 		for(row = 0; row < UKF_STATE_DIM; row++){

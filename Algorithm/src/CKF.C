@@ -23,7 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CKF.h"
 #include "FastMath.h"
+#include "Quaternion.h"
 
+#define USE_4TH_RUNGE_KUTTA
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune including the weight
 #define CKF_PQ_INITIAL 0.000001
@@ -180,6 +182,13 @@ void CKF_Update(CKF_Filter* ckf, float32_t *q, float32_t *gyro, float32_t *accel
 	arm_mat_setcolumn_f32(&ckf->XCP, tmpX, 0);
 	//
 	//evaluate the propagated cubature points
+#ifdef USE_4TH_RUNGE_KUTTA
+	tmpQ[0] = 0;
+	tmpQ[0] = tmpX[4];
+	tmpQ[0] = tmpX[5];
+	tmpQ[0] = tmpX[6];
+	Quaternion_RungeKutta4(tmpX, tmpQ, dt, 1);
+#else
 	halfdx = halfdt * tmpX[4];
 	halfdy = halfdt * tmpX[5];
 	halfdz = halfdt * tmpX[6];
@@ -204,6 +213,7 @@ void CKF_Update(CKF_Filter* ckf, float32_t *q, float32_t *gyro, float32_t *accel
 	tmpX[2] *= norm;
 	tmpX[3] *= norm;
 	//
+#endif
 	arm_mat_setcolumn_f32(&ckf->XminusCP, tmpX, 0);
 	for(row = 0; row < CKF_STATE_DIM; row++){
 		tmpS[row] = tmpX[row];
@@ -216,6 +226,13 @@ void CKF_Update(CKF_Filter* ckf, float32_t *q, float32_t *gyro, float32_t *accel
 		arm_mat_setcolumn_f32(&ckf->XCP, tmpX, col);
 		//
 		//evaluate the propagated cubature points
+#ifdef USE_4TH_RUNGE_KUTTA
+		tmpQ[0] = 0;
+		tmpQ[0] = tmpX[4];
+		tmpQ[0] = tmpX[5];
+		tmpQ[0] = tmpX[6];
+		Quaternion_RungeKutta4(tmpX, tmpQ, dt, 1);
+#else
 		halfdx = halfdt * tmpX[4];
 		halfdy = halfdt * tmpX[5];
 		halfdz = halfdt * tmpX[6];
@@ -239,6 +256,7 @@ void CKF_Update(CKF_Filter* ckf, float32_t *q, float32_t *gyro, float32_t *accel
 		tmpX[1] *= norm;
 		tmpX[2] *= norm;
 		tmpX[3] *= norm;
+#endif
 		//
 		arm_mat_setcolumn_f32(&ckf->XminusCP, tmpX, col);
 		for(row = 0; row < CKF_STATE_DIM; row++){

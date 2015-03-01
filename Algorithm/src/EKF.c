@@ -23,7 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "EKF.h"
 #include "FastMath.h"
+#include "Quaternion.h"
 
+#define USE_4TH_RUNGE_KUTTA
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune
 #define EKF_PQ_INITIAL 0.000001
@@ -126,6 +128,9 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	float32_t neghalfdx, neghalfdy, neghalfdz;
 	float32_t halfdtq0, halfdtq1, neghalfdtq1, halfdtq2, neghalfdtq2, halfdtq3, neghalfdtq3;
 	float32_t halfdt = 0.5f * dt;
+#ifdef USE_4TH_RUNGE_KUTTA
+	float32_t tmpW[4];
+#endif
 	//////////////////////////////////////////////////////////////////////////
 	float32_t q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
 	float32_t _2q0,_2q1,_2q2,_2q3;
@@ -195,6 +200,13 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	//simple way, pay attention!!!
 	//according to the actual gyroscope output
 	//and coordinate system definition
+#ifdef USE_4TH_RUNGE_KUTTA
+	tmpW[0] = 0;
+	tmpW[0] = X[4];
+	tmpW[0] = X[5];
+	tmpW[0] = X[6];
+	Quaternion_RungeKutta4(X, tmpW, dt, 1);
+#else
 	X[0] = q0 - (halfdx * q1 + halfdy * q2 + halfdz * q3);
 	X[1] = q1 + (halfdx * q0 + halfdy * q3 - halfdz * q2);
 	X[2] = q2 - (halfdx * q3 - halfdy * q0 - halfdz * q1);
@@ -206,7 +218,7 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	X[1] *= norm;
 	X[2] *= norm;
 	X[3] *= norm;
-
+#endif
 	//X covariance matrix update based on model
 	//P = F*P*F' + Q;
 	arm_mat_trans_f32(&ekf->F, &ekf->FT);

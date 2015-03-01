@@ -37,8 +37,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //uncomment one
 //#define USE_6AXIS_EKF
-#define USE_6AXIS_FP_EKF
-//#define USE_EKF
+//#define USE_6AXIS_FP_EKF
+#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
 
