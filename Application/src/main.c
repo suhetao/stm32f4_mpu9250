@@ -23,6 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "stm32f4_mpu9250.h"
 #include "stm32f4_serial.h"
+#include "Quaternion.h"
 
 #include "stm32f4_delay.h"
 #include "stm32f4_rcc.h"

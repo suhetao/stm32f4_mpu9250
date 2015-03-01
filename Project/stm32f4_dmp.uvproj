@@ -555,6 +555,11 @@
               <FileType>1</FileType>
               <FilePath>..\miniIMU\FP\FP_miniIMU.c</FilePath>
             </File>
+            <File>
+              <FileName>Quaternion.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\Quaternion.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

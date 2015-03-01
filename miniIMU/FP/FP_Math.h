@@ -136,7 +136,7 @@ __inline Q16 FP_UMUL(Q16 a, Q16 b)
 	return __r;
 }
 
-#if 1
+#if 0
 //translate from arm-gcc build-in toolchain
 //cortex-m3's instruction assembly optimization
 //div signed 32bit << 16 / signed 32bit = signed 32bit
@@ -428,7 +428,7 @@ __inline float FastSqrt(float x)
 //////////////////////////////////////////////////////////////////////////
 //translate from google's skia fixed-point dsp Library.
 //
-#define TO_FLOAT_DEGREE(x) ((float)(x) * 0.000874264215087890625f)
+#define TO_FLOAT_DEGREE(x) (((float)(x)) * 0.000874264215087890625f)
 
 #define Q16_TWOPI 411775
 #define Q16_PI 205887
