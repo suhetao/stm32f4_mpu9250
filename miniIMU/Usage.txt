@@ -28,7 +28,7 @@ Look into the filename of "miniIMU.h"
 
 either uncomment #define EKF_STATE_DIM 4
 or uncomment #define EKF_STATE_DIM 7 on your own,
-by default is "define EKF_STATE_DIM 4"
+by default is "define EKF_STATE_DIM 7"
 
 //////////////////////////////////////////////////////////////////////////
 //setp 2:
@@ -36,9 +36,9 @@ by default is "define EKF_STATE_DIM 4"
 using the struct as below,In the main loop of the program
 ......
 if EKF is not initialization
-	EKF_IMUInit(accel);
+	EKF_IMUInit(accel, gyro);
 else
-	EFK_IMUUpdate(gyro, accel, dt);
+	EKF_IMUUpdate(gyro, accel, dt);
 ......
 EKF_IMUGetAngle(rpy);
 

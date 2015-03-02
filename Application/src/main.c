@@ -36,9 +36,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GYRO_TORAD(x) (((float)(x)) * 0.00106422515365507901031932363932f)
 
 //uncomment one
-//#define USE_6AXIS_EKF
+#define USE_6AXIS_EKF
 //#define USE_6AXIS_FP_EKF
-#define USE_EKF
+//#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
 
@@ -96,12 +96,14 @@ static __inline unsigned short inv_orientation_matrix_to_scalar(const signed cha
     return scalar;
 }
 
+float f;
+
 int main(void)
 {
 	//PLL_M PLL_N PLL_P PLL_Q
-	PLL_PARAMS pFreq120M = {12, 240, 2, 5};
+	//PLL_PARAMS pFreq120M = {12, 240, 2, 5};
 	PLL_PARAMS pFreq128M = {12, 256, 2, 6};
-	PLL_PARAMS pFreq168M = {12, 336, 2, 7};
+	//PLL_PARAMS pFreq168M = {12, 336, 2, 7};
 
 	s32 s32Result = 0;
 	struct int_param_s pInitParam = {0};
@@ -110,11 +112,13 @@ int main(void)
 	u16 u16GyroFsr = 0;
 	//u16 u16DmpFeatures = DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO |
 		//DMP_FEATURE_GYRO_CAL;
-	u16 u16DmpFeatures = DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_RAW_GYRO;
+	u16 u16DmpFeatures = DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_SEND_RAW_ACCEL | DMP_FEATURE_SEND_CAL_GYRO;
 
 	s16 s16Gyro[3] = {0}, s16Accel[3] = {0}, s16Mag[3] = {0};
-	float fRealGyro[3] = {0}, fRealAccel[3] = {0}, fRealMag[3] = {0};
-	float fRealQ[4] = {0};
+	float fRealGyro[3] = {0}, fRealAccel[3] = {0};
+#if !defined USE_6AXIS_EKF && !defined USE_6AXIS_FP_EKF
+	float fRealMag[3] = {0}, fRealQ[4] = {0};
+#endif
 	s16 s16Sensors = 0;
 	u8 u8More = 0;
 	long lQuat[4] = {0};
@@ -132,9 +136,9 @@ int main(void)
 	unsigned long ulNowTime = 0;
 	unsigned long ulLastTime = 0;
 	unsigned long ulSendTime = 0;
-	float fDeltaTime = 0.0f;
+	float fDeltaTime = 1.0f;
 	u32 u32KFState = 0;
-
+	
 	//Reduced frequency
 	//128 / 4 = 32Mhz APB1, 32/32 = 1MHz SPI Clock
 	//1Mhz SPI Clock for read/write
@@ -203,7 +207,7 @@ int main(void)
 			fRealAccel[0] = s16Accel[0] / 16384.0f;
 			fRealAccel[1] = s16Accel[1] / 16384.0f;
 			fRealAccel[2] = s16Accel[2] / 16384.0f;
-			
+#if !defined USE_6AXIS_EKF && !defined USE_6AXIS_FP_EKF
 			if(!s32Result){
 				fRealMag[0] = s16Mag[0];
 				fRealMag[1] = s16Mag[1];
@@ -215,6 +219,7 @@ int main(void)
 			fRealQ[1] = (float)lQuat[1] / 1073741824.0f;
 			fRealQ[2] = (float)lQuat[2] / 1073741824.0f;
 			fRealQ[3] = (float)lQuat[3] / 1073741824.0f;
+#endif
 			////
 			Get_Ms(&ulNowTime);
 			if(!u32KFState){

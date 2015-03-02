@@ -202,9 +202,9 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	//and coordinate system definition
 #ifdef USE_4TH_RUNGE_KUTTA
 	tmpW[0] = 0;
-	tmpW[0] = X[4];
-	tmpW[0] = X[5];
-	tmpW[0] = X[6];
+	tmpW[1] = X[4];
+	tmpW[2] = X[5];
+	tmpW[3] = X[6];
 	Quaternion_RungeKutta4(X, tmpW, dt, 1);
 #else
 	X[0] = q0 - (halfdx * q1 + halfdy * q2 + halfdz * q3);

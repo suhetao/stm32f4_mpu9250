@@ -28,16 +28,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define USE_4TH_RUNGE_KUTTA
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune
-#define UKF_PQ_INITIAL 0.00001
-#define UKF_PW_INITIAL 0.00001
+#define UKF_PQ_INITIAL 0.000001
+#define UKF_PW_INITIAL 0.000001
 
-#define UKF_QQ_INITIAL 0.000045
-#define UKF_QW_INITIAL 0.000025
+#define UKF_QQ_INITIAL 0.0000045
+#define UKF_QW_INITIAL 0.0000025
 
-#define UKF_RQ_INITIAL 0.0001
-#define UKF_RA_INITIAL 0.0005
-#define UKF_RW_INITIAL 0.000525
-#define UKF_RM_INITIAL 0.000105
+#define UKF_RQ_INITIAL 0.000001
+#define UKF_RA_INITIAL 0.07
+#define UKF_RW_INITIAL 0.0525
+#define UKF_RM_INITIAL 0.105
 
 #define UKF_alpha (1.0f)
 #define UKF_beta (2.0f)
@@ -165,11 +165,12 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 {
 	int col, row;
 	float32_t norm;
+#ifndef USE_4TH_RUNGE_KUTTA
 	float32_t halfdx, halfdy, halfdz;
 	float32_t halfdt = 0.5f * dt;
+#endif
 	//////////////////////////////////////////////////////////////////////////
 	float32_t q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
-	float32_t _2q0,_2q1,_2q2,_2q3;
 	//
 	float32_t hx, hy, hz;
 	float32_t bx, bz;
@@ -186,9 +187,9 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	arm_mat_getcolumn_f32(&ukf->XSP, tmpX, 0);
 #ifdef USE_4TH_RUNGE_KUTTA
 	tmpQ[0] = 0;
-	tmpQ[0] = tmpX[4];
-	tmpQ[0] = tmpX[5];
-	tmpQ[0] = tmpX[6];
+	tmpQ[1] = tmpX[4];
+	tmpQ[2] = tmpX[5];
+	tmpQ[3] = tmpX[6];
 	Quaternion_RungeKutta4(tmpX, tmpQ, dt, 1);
 #else
 	//
@@ -227,9 +228,9 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 		//
 #ifdef USE_4TH_RUNGE_KUTTA
 		tmpQ[0] = 0;
-		tmpQ[0] = tmpX[4];
-		tmpQ[0] = tmpX[5];
-		tmpQ[0] = tmpX[6];
+		tmpQ[1] = tmpX[4];
+		tmpQ[2] = tmpX[5];
+		tmpQ[3] = tmpX[6];
 		Quaternion_RungeKutta4(tmpX, tmpQ, dt, 1);
 #else
 		halfdx = halfdt * tmpX[4];
@@ -295,10 +296,6 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 
 	arm_mat_getcolumn_f32(&ukf->XSP, tmpX, 0);
 	//Auxiliary variables to avoid repeated arithmetic
-	_2q0 = 2.0f * tmpX[0];
-	_2q1 = 2.0f * tmpX[1];
-	_2q2 = 2.0f * tmpX[2];
-	_2q3 = 2.0f * tmpX[3];
 	//
 	q0q0 = tmpX[0] * tmpX[0];
 	q0q1 = tmpX[0] * tmpX[1];
@@ -339,10 +336,6 @@ void UKF_Update(UKF_Filter* ukf, float32_t *q, float32_t *gyro, float32_t *accel
 	for(col = 1; col < UKF_SP_POINTS; col++){
 		arm_mat_getcolumn_f32(&ukf->XSP, tmpX, col);
 		//Auxiliary variables to avoid repeated arithmetic
-		_2q0 = 2.0f * tmpX[0];
-		_2q1 = 2.0f * tmpX[1];
-		_2q2 = 2.0f * tmpX[2];
-		_2q3 = 2.0f * tmpX[3];
 		//
 		q0q0 = tmpX[0] * tmpX[0];
 		q0q1 = tmpX[0] * tmpX[1];

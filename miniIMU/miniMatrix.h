@@ -21,52 +21,21 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _QUATERNION_H_
-#define _QUATERNION_H_
+#ifndef _MAXTRIX_H_
+#define _MAXTRIX_H_
 
 #include "FastMath.h"
 
-__inline void Quaternion_Add(float *r, float *a, float *b)
-{
-	r[0] = a[0] + b[0];
-	r[1] = a[0] + b[1];
-	r[2] = a[0] + b[2];
-	r[3] = a[0] + b[3];
-}
+//////////////////////////////////////////////////////////////////////////
+//
 
-__inline void Quaternion_Sub(float *r, float *a, float *b)
-{
-	r[0] = a[0] - b[0];
-	r[1] = a[0] - b[1];
-	r[2] = a[0] - b[2];
-	r[3] = a[0] - b[3];
-}
-
-__inline void Quaternion_Multiply(float *r, float *a, float *b)
-{
-	r[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
-	r[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
-	r[2] = a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1];
-	r[3] = a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0];
-}
-
-__inline void Quaternion_Conjugate(float *r, float *a)
-{
-	r[0] = a[0];
-	r[1] = -a[1];
-	r[2] = -a[2];
-	r[3] = -a[3];
-}
-
-__inline void Quaternion_Scalar(float *r, float *q, float scalar)
-{
-	r[0] = q[0] * scalar;
-	r[1] = q[1] * scalar;
-	r[2] = q[2] * scalar;
-	r[3] = q[3] * scalar;
-}
-
-void Quaternion_Normalize(float *q);
-void Quaternion_RungeKutta4(float *q, float *w, float dt, int normalize);
+void Matrix_Zero(float *A, unsigned short numRows, unsigned short numCols);
+void Matrix_Copy(float *pSrc, unsigned short numRows, unsigned short numCols, float *pDst);
+int Maxtrix_Add(float *pSrcA, unsigned short numRows, unsigned short numCols, float *pSrcB, float *pDst);
+int Maxtrix_Sub(float *pSrcA, unsigned short numRows, unsigned short numCols, float *pSrcB, float *pDst);
+int Matrix_Multiply(float* pSrcA, unsigned short numRowsA, unsigned short numColsA, float* pSrcB, unsigned short numColsB, float* pDst);
+void Matrix_Multiply_With_Transpose(float *A, unsigned short nrows, unsigned short ncols, float *B, unsigned short mrows, float *C);
+void Maxtrix_Transpose(float *pSrc, unsigned short nRows, unsigned short nCols, float *pDst);
+int Matrix_Inverse(float* pDst, unsigned short n, float * pSrc);
 
 #endif

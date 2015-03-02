@@ -362,7 +362,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER STM32F40_41xxx ARM_MATH_CM4 __FPU_PRESENT MPU9250</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Drivers\inc;..\Application\inc;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\miniIMU;..\miniIMU\FP</IncludePath>
+              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Drivers\inc;..\Application\inc;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc;..\miniIMU;..\miniIMU\FP</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -546,16 +546,6 @@
               <FilePath>..\Algorithm\src\UKF.c</FilePath>
             </File>
             <File>
-              <FileName>miniIMU.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\miniIMU\miniIMU.c</FilePath>
-            </File>
-            <File>
-              <FileName>FP_miniIMU.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\miniIMU\FP\FP_miniIMU.c</FilePath>
-            </File>
-            <File>
               <FileName>Quaternion.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\Quaternion.c</FilePath>
@@ -594,6 +584,51 @@
               <FileName>stm32f4_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Drivers\src\stm32f4_usart.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Math</GroupName>
+          <Files>
+            <File>
+              <FileName>FastMath.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Math\src\FastMath.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>miniIMU</GroupName>
+          <Files>
+            <File>
+              <FileName>miniIMU.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\miniIMU.c</FilePath>
+            </File>
+            <File>
+              <FileName>miniMatrix.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\miniMatrix.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FP_miniIMU</GroupName>
+          <Files>
+            <File>
+              <FileName>FP_Matrix.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\FP\FP_Matrix.c</FilePath>
+            </File>
+            <File>
+              <FileName>FP_miniIMU.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\FP\FP_miniIMU.c</FilePath>
+            </File>
+            <File>
+              <FileName>FP_Math.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniIMU\FP\FP_Math.c</FilePath>
             </File>
           </Files>
         </Group>

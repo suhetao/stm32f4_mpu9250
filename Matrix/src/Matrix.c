@@ -129,7 +129,7 @@ arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s)
 		}
 		arm_sqrt_f32(*p_Lkk, p_Lkk);
 		reciprocal = 1.0f / *p_Lkk;
-		//reciprocal = FastSqrtI(*p_Lkk);
+
 		p_Li0 = p_Lk0 + n;
 		for (i = k + 1; i < n; p_Li0 += n, i++) {
 			for (p = 0; p < k; p++){
@@ -174,4 +174,20 @@ void arm_mat_setsubmatrix_f32(arm_matrix_instance_f32* a, arm_matrix_instance_f3
 				*(A + j) = *S++;
 			}
 	}
+}
+
+void arm_mat_getcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col)
+{
+	int nrows = s->numRows, ncols = s->numCols;
+	float32_t *S = s->pData;
+	int i = 0;
+	for (S += col; i < nrows; S += ncols, i++) x[i] = *S;
+}
+
+void arm_mat_setcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col)
+{
+	int nrows = s->numRows, ncols = s->numCols;
+	float32_t *S = s->pData;
+	int i = 0;
+	for (S += col; i < nrows; S += ncols, i++) *S = x[i];
 }

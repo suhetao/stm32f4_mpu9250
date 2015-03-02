@@ -24,6 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "FP_miniIMU.h"
 #include "FP_Math.h"
 #include "FP_Matrix.h"
+#include "FastMath.h"
 
 //////////////////////////////////////////////////////////////////////////
 //S16.16
@@ -192,8 +193,6 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	Q16 _2q0,_2q1,_2q2,_2q3;
 	Q16 q0, q1, q2, q3;
 	
-	Q16 SB[FP_EKF_MEASUREMENT_DIM * FP_EKF_MEASUREMENT_DIM] = {0};
-	int SP[FP_EKF_MEASUREMENT_DIM] = {0};
 	Q16 SI[FP_EKF_MEASUREMENT_DIM * FP_EKF_MEASUREMENT_DIM] = {0};
 	//////////////////////////////////////////////////////////////////////////
 	int __al, __ah;
@@ -293,8 +292,8 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	
 	//covariance time propagation
 	//P = F*P*F' + Q;
-	FP_Maxtrix_Mul(F, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, P, FP_EKF_STATE_DIM, PX);
-	FP_Maxtrix_Mul_With_Transpose(PX, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, F, FP_EKF_STATE_DIM, P);
+	FP_Matrix_Multiply(F, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, P, FP_EKF_STATE_DIM, PX);
+	FP_Matrix_Multiply_With_Transpose(PX, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, F, FP_EKF_STATE_DIM, P);
 	FP_Maxtrix_Add(P, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, Q, P);
 	
 	//////////////////////////////////////////////////////////////////////////
@@ -316,11 +315,11 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	H[14] = -_2q0; H[15] = _2q1; H[16] = _2q2; H[17] = -_2q3;
 #endif
 
-	FP_Maxtrix_Mul_With_Transpose(P, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, H, FP_EKF_MEASUREMENT_DIM, PHT);
-	FP_Maxtrix_Mul(H, FP_EKF_MEASUREMENT_DIM, FP_EKF_STATE_DIM, PHT, FP_EKF_MEASUREMENT_DIM, S);
+	FP_Matrix_Multiply_With_Transpose(P, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, H, FP_EKF_MEASUREMENT_DIM, PHT);
+	FP_Matrix_Multiply(H, FP_EKF_MEASUREMENT_DIM, FP_EKF_STATE_DIM, PHT, FP_EKF_MEASUREMENT_DIM, S);
 	FP_Maxtrix_Add(S, FP_EKF_MEASUREMENT_DIM, FP_EKF_MEASUREMENT_DIM, R, S);
-	FP_Maxtrix_Inv(S, SB, SP, FP_EKF_MEASUREMENT_DIM, SI);
-	FP_Maxtrix_Mul(PHT, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, SI, FP_EKF_MEASUREMENT_DIM, K);
+	FP_Matrix_Inverse(S, FP_EKF_MEASUREMENT_DIM, SI);
+	FP_Matrix_Multiply(PHT, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, SI, FP_EKF_MEASUREMENT_DIM, K);
 
 	//state measurement update
 	//X = X + K * Y;
@@ -340,7 +339,7 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	Y[0] = FP_SUBS(FT_Q16(accel[0]), Y[0]);
 	Y[1] = FP_SUBS(FT_Q16(accel[1]), Y[1]);
 	Y[2] = FP_SUBS(FT_Q16(accel[2]), Y[2]);
-	FP_Maxtrix_Mul(K, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, Y, 1, KY);
+	FP_Matrix_Multiply(K, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, Y, 1, KY);
 	FP_Maxtrix_Add(X, FP_EKF_STATE_DIM, 1, X, KY);
 
 	//normalize quaternion
@@ -367,9 +366,9 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 
 	//covariance measurement update
 	//P = (I - K * H) * P
-	FP_Maxtrix_Mul(K, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, H, FP_EKF_STATE_DIM, PX);
+	FP_Matrix_Multiply(K, FP_EKF_STATE_DIM, FP_EKF_MEASUREMENT_DIM, H, FP_EKF_STATE_DIM, PX);
 	FP_Maxtrix_Sub(I, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, PX, PX);
-	FP_Maxtrix_Mul(PX, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, P, FP_EKF_STATE_DIM, PXX);
+	FP_Matrix_Multiply(PX, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, P, FP_EKF_STATE_DIM, PXX);
 	FP_Matrix_Copy(PXX, FP_EKF_STATE_DIM, FP_EKF_STATE_DIM, P);
 }
 

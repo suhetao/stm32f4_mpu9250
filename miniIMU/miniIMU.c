@@ -21,9 +21,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "miniIMU.h"
 #include "FastMath.h"
-#include "Matrix.h"
+#include "miniIMU.h"
+#include "miniMatrix.h"
 //////////////////////////////////////////////////////////////////////////
 //
 //all parameters below need to be tune
@@ -37,6 +37,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 //////////////////////////////////////////////////////////////////////////
 //
+#ifdef UPDATE_P_COMPLICATED
 static float I[EKF_STATE_DIM * EKF_STATE_DIM] = {
 #if EKF_STATE_DIM == 4
 	1.0f, 0, 0, 0,
@@ -53,6 +54,7 @@ static float I[EKF_STATE_DIM * EKF_STATE_DIM] = {
 	0, 0, 0, 0, 0, 0, 1.0f,
 #endif
 };
+#endif
 
 static float P[EKF_STATE_DIM * EKF_STATE_DIM] = {
 #if EKF_STATE_DIM == 4
@@ -135,12 +137,7 @@ static float PX[EKF_STATE_DIM * EKF_STATE_DIM];
 static float PXX[EKF_STATE_DIM * EKF_STATE_DIM];
 static float PXY[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 static float KA[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
-
 static float SA[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
-
-//static float Qd[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
-//static float Rd[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM];
-//static float AQ[EKF_STATE_DIM * EKF_MEASUREMENT_DIM];
 
 void EKF_IMUInit(float *accel, float *gyro)
 {
@@ -197,8 +194,6 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	float _2q0,_2q1,_2q2,_2q3;
 	float q0, q1, q2, q3;
 	//
-	float SB[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM] = {0};
-	int SP[EKF_MEASUREMENT_DIM] = {0};
 	float SI[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM] = {0};
 	//////////////////////////////////////////////////////////////////////////
 #if EKF_STATE_DIM == 4
@@ -255,8 +250,8 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 
 	//covariance time propagation
 	//P = F*P*F' + Q;
-	Maxtrix_Mul(F, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PX);
-	Maxtrix_Mul_With_Transpose(PX, EKF_STATE_DIM, EKF_STATE_DIM, F, EKF_STATE_DIM, P);
+	Matrix_Multiply(F, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PX);
+	Matrix_Multiply_With_Transpose(PX, EKF_STATE_DIM, EKF_STATE_DIM, F, EKF_STATE_DIM, P);
 	Maxtrix_Add(P, EKF_STATE_DIM, EKF_STATE_DIM, Q, P);
 
 	//////////////////////////////////////////////////////////////////////////
@@ -278,12 +273,11 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	HA[14] = -_2q0; HA[15] = _2q1; HA[16] = _2q2; HA[17] = -_2q3;
 #endif
 
-	Maxtrix_Mul_With_Transpose(P, EKF_STATE_DIM, EKF_STATE_DIM, HA, EKF_MEASUREMENT_DIM, PXY);
-	Maxtrix_Mul(HA, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, PXY, EKF_MEASUREMENT_DIM, SA);
+	Matrix_Multiply_With_Transpose(P, EKF_STATE_DIM, EKF_STATE_DIM, HA, EKF_MEASUREMENT_DIM, PXY);
+	Matrix_Multiply(HA, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, PXY, EKF_MEASUREMENT_DIM, SA);
 	Maxtrix_Add(SA, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, RA, SA);
-	//Matrix_Div(KA, PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, SA, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, Qd, Rd, AQ);
-	Maxtrix_Inv(SA, SB, SP, EKF_MEASUREMENT_DIM, SI);
-	Maxtrix_Mul(PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, SI, EKF_MEASUREMENT_DIM, KA);
+	Matrix_Inverse(SA, EKF_MEASUREMENT_DIM, SI);
+	Matrix_Multiply(PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, SI, EKF_MEASUREMENT_DIM, KA);
 
 	//state measurement update
 	//X = X + K * Y;
@@ -302,7 +296,7 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	Y[2] = accel[2] - Y[2];
 	
 	// Update State Vector
-	Maxtrix_Mul(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, Y, 1, KY);
+	Matrix_Multiply(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, Y, 1, KY);
 	Maxtrix_Add(X, EKF_STATE_DIM, 1, KY, X);
 
 	//normalize quaternion
@@ -314,20 +308,20 @@ void EKF_IMUUpdate(float *gyro, float *accel, float dt)
 
 	//covariance measurement update
 	//P = (I - K * H) * P
+	//P = P - K * H * P
 	//or
 	//P=(I - K*H)*P*(I - K*H)' + K*R*K'
-#if 1
-	Maxtrix_Mul(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, HA, EKF_STATE_DIM, PX);
-	Maxtrix_Sub(I, EKF_STATE_DIM, EKF_STATE_DIM, PX, PX);
-	Maxtrix_Mul(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
-	Matrix_Copy(PXX, EKF_STATE_DIM, EKF_STATE_DIM, P);
+#ifndef UPDATE_P_COMPLICATED
+	Matrix_Multiply(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, HA, EKF_STATE_DIM, PX);
+	Matrix_Multiply(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
+	Maxtrix_Add(P, EKF_STATE_DIM, EKF_STATE_DIM, PXX, P);
 #else
-	Maxtrix_Mul(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, HA, EKF_STATE_DIM, PX);
+	Matrix_Multiply(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, HA, EKF_STATE_DIM, PX);
 	Maxtrix_Sub(I, EKF_STATE_DIM, EKF_STATE_DIM, PX, PX);
-	Maxtrix_Mul(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
-	Maxtrix_Mul_With_Transpose(PXX, EKF_STATE_DIM, EKF_STATE_DIM, PX, EKF_STATE_DIM, P);
-	Maxtrix_Mul(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, RA, EKF_MEASUREMENT_DIM, PXY);
-	Maxtrix_Mul_With_Transpose(PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, KA, EKF_STATE_DIM, PX);
+	Matrix_Multiply(PX, EKF_STATE_DIM, EKF_STATE_DIM, P, EKF_STATE_DIM, PXX);
+	Matrix_Multiply_With_Transpose(PXX, EKF_STATE_DIM, EKF_STATE_DIM, PX, EKF_STATE_DIM, P);
+	Matrix_Multiply(KA, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, RA, EKF_MEASUREMENT_DIM, PXY);
+	Matrix_Multiply_With_Transpose(PXY, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, KA, EKF_STATE_DIM, PX);
 	Maxtrix_Add(P, EKF_STATE_DIM, EKF_STATE_DIM, PX, P);
 #endif
 }

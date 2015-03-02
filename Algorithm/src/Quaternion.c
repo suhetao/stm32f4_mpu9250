@@ -1,5 +1,14 @@
 #include "Quaternion.h"
 
+void Quaternion_Normalize(float *q)
+{
+	float norm = FastSqrtI(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+	q[0] *= norm;
+	q[1] *= norm;
+	q[2] *= norm;
+	q[3] *= norm;
+}
+
 void Quaternion_RungeKutta4(float *q, float *w, float dt, int normalize)
 {
 	float half = 0.5f;

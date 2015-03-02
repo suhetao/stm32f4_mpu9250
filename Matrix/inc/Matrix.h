@@ -36,20 +36,7 @@ arm_status arm_mat_remainlower_f32(arm_matrix_instance_f32* s);
 void arm_mat_getsubmatrix_f32(arm_matrix_instance_f32* s, arm_matrix_instance_f32 *a, int row, int col);
 void arm_mat_setsubmatrix_f32(arm_matrix_instance_f32* a, arm_matrix_instance_f32 *s, int row, int col);
 
-__inline void arm_mat_getcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col)
-{
-	int nrows = s->numRows, ncols = s->numCols;
-	float32_t *S = s->pData;
-	int i = 0;
-	for (S += col; i < nrows; S += ncols, i++) x[i] = *S;
-}
-
-__inline void arm_mat_setcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col)
-{
-	int nrows = s->numRows, ncols = s->numCols;
-	float32_t *S = s->pData;
-	int i = 0;
-	for (S += col; i < nrows; S += ncols, i++) *S = x[i];
-}
+void arm_mat_getcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col);
+void arm_mat_setcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col);
 
 #endif
