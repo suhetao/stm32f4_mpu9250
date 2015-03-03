@@ -50,7 +50,7 @@ Q16 FT_Q16(float f)
 	return ival;
 }
 
-#ifdef OPTIMIZE
+#ifdef OPTIMIZE_SDIV
 //translate from arm-gcc build-in toolchain
 //cortex-m3's instruction assembly optimization
 //div signed 32bit << 16 / signed 32bit = signed 32bit

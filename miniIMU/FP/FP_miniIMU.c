@@ -28,6 +28,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //////////////////////////////////////////////////////////////////////////
 //S16.16
+//precision 1 / 2^16 = 0.0000152587890625
+
 //all parameters below need to be tune
 #define FP_EKF_PQ_INITIAL 66//0.001
 #define FP_EKF_QQ_INITIAL 66//0.001
@@ -257,32 +259,28 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//X[3] = q3 - halfdx * q2 + halfdy * q1 + halfdz * q0;
 	//cortex-m3's instruction assembly optimization
 	__asm{
-		mov __al, #0;mov __ah, #0;
-		smlal __al, __ah, neghalfdx, q1;
+		smull __al, __ah, neghalfdx, q1;
 		smlal __al, __ah, neghalfdy, q2;
 		smlal __al, __ah, neghalfdz, q3;
 		lsls __ah, __ah, #16;
 		orr X[0], __ah, __al, lsr #16;
 		adds X[0], q0, X[0];
 
-		mov __al, #0;mov __ah, #0;
-		smlal __al, __ah, halfdx, q0;
+		smull __al, __ah, halfdx, q0;
 		smlal __al, __ah, neghalfdy, q3;
 		smlal __al, __ah, halfdz, q2;
 		lsls __ah, __ah, #16;
 		orr X[1], __ah, __al, lsr #16;
 		adds X[1], q1, X[1];
 
-		mov __al, #0;mov __ah, #0;
-		smlal __al, __ah, halfdx, q3;
+		smull __al, __ah, halfdx, q3;
 		smlal __al, __ah, halfdy, q0;
 		smlal __al, __ah, neghalfdz, q1;
 		lsls __ah, __ah, #16;
 		orr X[2], __ah, __al, lsr #16;
 		adds X[2], q2, X[2];
 
-		mov __al, #0;mov __ah, #0;
-		smlal __al, __ah, neghalfdx, q2;
+		smull __al, __ah, neghalfdx, q2;
 		smlal __al, __ah, halfdy, q1;
 		smlal __al, __ah, halfdz, q0;
 		lsls __ah, __ah, #16;
@@ -350,8 +348,7 @@ void FP_EKF_IMUUpdate(float *gyro, float *accel, float dt)
 	//X[3] *= norm;
 	//cortex-m3's instruction assembly optimization
 	__asm{
-		mov __al, #0;mov __ah, #0;
-		smlal __al, __ah, X[0], X[0];
+		smull __al, __ah, X[0], X[0];
 		smlal __al, __ah, X[1], X[1];
 		smlal __al, __ah, X[2], X[2];
 		smlal __al, __ah, X[3], X[3];
