@@ -362,7 +362,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER STM32F40_41xxx ARM_MATH_CM4 __FPU_PRESENT MPU9250</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Drivers\inc;..\Application\inc;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc;..\miniIMU;..\miniIMU\FP</IncludePath>
+              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Drivers\inc;..\Application\inc;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc;..\miniIMU;..\miniIMU\FP;..\miniAHRS</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -629,6 +629,16 @@
               <FileName>FP_Math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\miniIMU\FP\FP_Math.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>miniAHRS</GroupName>
+          <Files>
+            <File>
+              <FileName>miniAHRS.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\miniAHRS\miniAHRS.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -72,4 +72,6 @@ float FastAtan2(float y, float x);
 float FastSqrtI(float x);
 float FastSqrt(float x);
 
+void FastSinCos(float x, float *sinVal, float *cosVal);
+
 #endif

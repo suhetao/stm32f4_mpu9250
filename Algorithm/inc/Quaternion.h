@@ -67,6 +67,7 @@ __inline void Quaternion_Scalar(float *r, float *q, float scalar)
 }
 
 void Quaternion_Normalize(float *q);
+void Quaternion_FromEuler(float *q, float *rpy);
 void Quaternion_RungeKutta4(float *q, float *w, float dt, int normalize);
 
 #endif

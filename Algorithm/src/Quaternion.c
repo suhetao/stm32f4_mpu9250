@@ -1,4 +1,5 @@
 #include "Quaternion.h"
+#include "FastMath.h"
 
 void Quaternion_Normalize(float *q)
 {
@@ -7,6 +8,24 @@ void Quaternion_Normalize(float *q)
 	q[1] *= norm;
 	q[2] *= norm;
 	q[3] *= norm;
+}
+
+void Quaternion_FromEuler(float *q, float *rpy)
+{
+	float sPhi2, cPhi2; // sin(phi/2) and cos(phi/2)
+	float sThe2, cThe2; // sin(theta/2) and cos(theta/2)
+	float sPsi2, cPsi2; // sin(psi/2) and cos(psi/2)
+	// calculate sines and cosines
+	
+	FastSinCos(0.5f * rpy[0], &sPhi2, &cPhi2);
+	FastSinCos(0.5f * rpy[1], &sThe2, &cThe2);
+	FastSinCos(0.5f * rpy[2], &sPsi2, &cPsi2);
+	
+	// compute the quaternion elements
+	q[0] = cPsi2 * cThe2 * cPhi2 + sPsi2 * sThe2 * sPhi2;
+	q[1] = cPsi2 * cThe2 * sPhi2 - sPsi2 * sThe2 * cPhi2;
+	q[2] = cPsi2 * sThe2 * cPhi2 + sPsi2 * cThe2 * sPhi2;
+	q[3] = sPsi2 * cThe2 * cPhi2 - cPsi2 * sThe2 * sPhi2;
 }
 
 void Quaternion_RungeKutta4(float *q, float *w, float dt, int normalize)

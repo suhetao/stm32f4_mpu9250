@@ -36,11 +36,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GYRO_TORAD(x) (((float)(x)) * 0.00106422515365507901031932363932f)
 
 //uncomment one
-//#define USE_6AXIS_EKF
-#define USE_6AXIS_FP_EKF
 //#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
+
+//for doctor's mini Quadrotor
+//#define USE_6AXIS_EKF
+//#define USE_6AXIS_FP_EKF
+
+//
+#define USE_9AXIS_EKF
 
 #ifdef USE_EKF
 #include "EKF.h"
@@ -52,6 +57,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "miniIMU.h"
 #elif defined USE_6AXIS_FP_EKF
 #include "FP_miniIMU.h"
+#elif defined USE_9AXIS_EKF
+#include "miniAHRS.h"
 #endif
 
 static s8 gyro_orientation[9] = {
@@ -233,6 +240,8 @@ int main(void)
 				EKF_IMUInit(fRealAccel, fRealGyro);
 #elif defined USE_6AXIS_FP_EKF
 				FP_EKF_IMUInit(fRealAccel, fRealGyro);
+#elif defined USE_9AXIS_EKF
+				EKF_AHRSInit(fRealAccel, fRealMag);
 #endif				
 				ulLastTime = ulNowTime;
 				ulSendTime = ulNowTime;
@@ -250,6 +259,8 @@ int main(void)
 				EKF_IMUUpdate(fRealGyro, fRealAccel, fDeltaTime);
 #elif defined USE_6AXIS_FP_EKF
 				FP_EKF_IMUUpdate(fRealGyro, fRealAccel, fDeltaTime);
+#elif defined USE_9AXIS_EKF
+				EKF_AHRSUpdate(fRealGyro, fRealAccel, fRealMag, fDeltaTime);
 #endif	
 			}
 			
@@ -263,6 +274,8 @@ int main(void)
 			EKF_IMUGetAngle(fRPY);
 #elif defined USE_6AXIS_FP_EKF
 			FP_EKF_IMUGetAngle(fRPY);
+#elif defined USE_9AXIS_EKF
+			EKF_AHRSGetAngle(fRPY);
 #endif
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere

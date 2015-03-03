@@ -19,3 +19,13 @@ EKF(Extended Kalman filter) / Unscented Kalman Filter(UKF) / Cubature Kalman Fil
 
 	calibraion for accelerometer, gyroscope, magnetometer
 	please check the "Calibration App" directory at the root
+
+4.Add a miniAHRS for 9-axis fusion, such as ax ay az wx wy wz mx my mz form accelerometer,gyroscope,magnetometer
+
+	7-state ekf algorithm: quaternion and 3-axis gyroscope bais
+	3-mesurement for accelerometer
+	3-mesurement for magnetometer
+
+5.Other stuff
+
+	using 4-order Runge_Kutta to slove the quaternion differential equation.
