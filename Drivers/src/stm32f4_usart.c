@@ -23,6 +23,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "stm32f4_usart.h"
 #include "stm32f4_common.h"
+#include "stm32f4_string.h"
 
 void USARTx_Init(USART_Driver* USARTx)
 {

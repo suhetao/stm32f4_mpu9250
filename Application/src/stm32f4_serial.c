@@ -24,6 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "stm32f4_serial.h"
 #include "stm32f4_usart.h"
 #include "stm32f4_common.h"
+#include "stm32f4_string.h"
 
 #ifdef USARTx_USE_DMA
 static uint8_t DMA_TxBuffer[DEFAULT_BUFFERSIZE];

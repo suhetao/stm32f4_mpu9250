@@ -440,6 +440,11 @@
               <FileType>1</FileType>
               <FilePath>..\Application\src\stm32f4_serial.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4_string.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Application\src\stm32f4_string.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -549,6 +554,11 @@
               <FileName>Quaternion.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\Quaternion.c</FilePath>
+            </File>
+            <File>
+              <FileName>Control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\Control.c</FilePath>
             </File>
           </Files>
         </Group>

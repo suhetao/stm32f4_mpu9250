@@ -108,8 +108,8 @@ float f;
 int main(void)
 {
 	//PLL_M PLL_N PLL_P PLL_Q
-	//PLL_PARAMS pFreq120M = {12, 240, 2, 5};
-	PLL_PARAMS pFreq128M = {12, 256, 2, 6};
+	PLL_PARAMS pFreq120M = {12, 240, 2, 5};
+	//PLL_PARAMS pFreq128M = {12, 256, 2, 6};
 	//PLL_PARAMS pFreq168M = {12, 336, 2, 7};
 
 	s32 s32Result = 0;
@@ -149,7 +149,7 @@ int main(void)
 	//Reduced frequency
 	//128 / 4 = 32Mhz APB1, 32/32 = 1MHz SPI Clock
 	//1Mhz SPI Clock for read/write
-	RCC_SystemCoreClockUpdate(pFreq128M);
+	RCC_SystemCoreClockUpdate(pFreq120M);
 	Delay_Init();
 	MPU9250_Init();
 	

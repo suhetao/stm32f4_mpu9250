@@ -169,6 +169,7 @@ float FastAtan2(float y, float x)
 
 float FastSqrtI(float x)
 {
+#if 0
 	L2F l2f;
 	float xhalf = 0.5f * x;
 	l2f.f = x;
@@ -176,6 +177,11 @@ float FastSqrtI(float x)
 	l2f.i = 0x5f3759df - (l2f.i >> 1);
 	x = l2f.f * (1.5f - xhalf * l2f.f * l2f.f);
 	return x;
+#else
+	unsigned int i = 0x5F1F1412 - (*(unsigned int*)&x >> 1);
+	float tmp = *(float*)&i;
+	return tmp * (1.69000231f - 0.714158168f * x * tmp * tmp);
+#endif
 }
 
 float FastSqrt(float x)
