@@ -106,4 +106,12 @@ void UKF_Init(UKF_Filter* UKF, float32_t *q, float32_t *gyro);
 void UKF_Update(UKF_Filter* UKF, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt);
 void UKF_GetAngle(UKF_Filter* UKF, float32_t* rpy);
 
+__inline void UKF_GetQ(UKF_Filter* ukf, float32_t* Q)
+{
+	Q[0] = ukf->X_f32[0];
+	Q[1] = ukf->X_f32[1];
+	Q[2] = ukf->X_f32[2];
+	Q[3] = ukf->X_f32[3];
+}
+
 #endif

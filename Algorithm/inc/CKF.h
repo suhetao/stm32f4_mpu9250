@@ -111,4 +111,12 @@ void CKF_Init(CKF_Filter* ckf, float32_t *q, float32_t *gyro);
 void CKF_Update(CKF_Filter* ckf, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt);
 void CKF_GetAngle(CKF_Filter* ckf, float32_t* rpy);
 
+__inline void CKF_GetQ(CKF_Filter* ckf, float32_t* Q)
+{
+	Q[0] = ckf->X_f32[0];
+	Q[1] = ckf->X_f32[1];
+	Q[2] = ckf->X_f32[2];
+	Q[3] = ckf->X_f32[3];
+}
+
 #endif

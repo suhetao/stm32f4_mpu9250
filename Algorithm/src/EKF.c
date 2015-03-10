@@ -288,20 +288,11 @@ void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel
 	//The H matrix maps the measurement to the states 13 x 7
 	//row started from 0 to 12, col started from 0 to 6
 	//row 4, col 0~3
-	H[28] = -_2q2;
-	H[29] = _2q3;
-	H[30] = -_2q0;
-	H[31] = _2q1;
+	H[28] = -_2q2; H[29] = _2q3; H[30] = -_2q0; H[31] = _2q1;
 	//row 5, col 0~3
-	H[35] = _2q1;
-	H[36] = _2q0;
-	H[37] = _2q3;
-	H[38] = _2q2;
+	H[35] = _2q1; H[36] = _2q0; H[37] = _2q3; H[38] = _2q2;
 	//row 6, col 0~3
-	H[42] = _2q0;
-	H[43] = -_2q1;
-	H[44] = -_2q2;
-	H[45] = _2q3;
+	H[42] = _2q0; H[43] = -_2q1; H[44] = -_2q2;	H[45] = _2q3;
 	//row 10, col 0~3
 	H[70] = bx * _2q0 - bz * _2q2;
 	H[71] = bx * _2q1 + bz * _2q3;

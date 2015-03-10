@@ -72,7 +72,7 @@ void Serial_SendBytes(uint8_t* buffer, uint8_t length)
 
 void Serial_Upload(short accel[3], short gyro[3], short compass[3], long quat[4], long temperature, long pressure)
 {
-	//must bytes alignment
+	//must 4-bytes alignment
 	uint8_t out[PACKET_LENGTH];
 	short* sDest = (short*)out;
 	long* lDest;

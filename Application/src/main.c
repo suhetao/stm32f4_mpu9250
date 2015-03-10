@@ -35,17 +35,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DEFAULT_MPU_HZ  (200)
 #define GYRO_TORAD(x) (((float)(x)) * 0.00106422515365507901031932363932f)
 
+//////////////////////////////////////////////////////////////////////////
 //uncomment one
 //#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
+#define USE_9AXIS_EKF
 
 //for doctor's mini Quadrotor
 //#define USE_6AXIS_EKF
 //#define USE_6AXIS_FP_EKF
 
-//
-#define USE_9AXIS_EKF
+//////////////////////////////////////////////////////////////////////////
 
 #ifdef USE_EKF
 #include "EKF.h"
@@ -131,6 +132,7 @@ int main(void)
 	long lQuat[4] = {0};
 	unsigned long ulTimeStamp = 0;
 	float fRPY[3] = {0};
+	float fQ[4] = {0};
 
 #ifdef USE_EKF
 	EKF_Filter ekf;
@@ -230,6 +232,9 @@ int main(void)
 			////
 			Get_Ms(&ulNowTime);
 			if(!u32KFState){
+				if(s32Result < 0){
+					continue;
+				}
 #ifdef USE_EKF
 				EKF_Init(&ekf, fRealQ, fRealGyro);
 #elif defined USE_UKF
@@ -266,17 +271,28 @@ int main(void)
 			
 #ifdef USE_EKF
 			EKF_GetAngle(&ekf, fRPY);
+			EKF_GetQ(&ekf, fQ);
 #elif defined USE_UKF
 			UKF_GetAngle(&ukf, fRPY);
+			UKF_GetQ(&ukf, fQ);
 #elif defined USE_CKF
 			CKF_GetAngle(&ckf, fRPY);
+			CKF_GetQ(&ckf, fQ);
 #elif defined USE_6AXIS_EKF
 			EKF_IMUGetAngle(fRPY);
+			EKF_IMUGetQ(fQ);
 #elif defined USE_6AXIS_FP_EKF
 			FP_EKF_IMUGetAngle(fRPY);
+			FP_EKF_IMUGetQ(fQ);
 #elif defined USE_9AXIS_EKF
 			EKF_AHRSGetAngle(fRPY);
+			EKF_AHRSGetQ(fQ);
 #endif
+			//transmit Quaternion float format to Q31
+			lQuat[0] = (long)(fQ[0] * 2147483648.0f);
+			lQuat[1] = (long)(fQ[1] * 2147483648.0f);
+			lQuat[2] = (long)(fQ[2] * 2147483648.0f);
+			lQuat[3] = (long)(fQ[3] * 2147483648.0f);
 			//todo
 			//transmit the gyro, accel, mag, quat roll pitch yaw to anywhere
 			//1000 / 10 = 100HZ

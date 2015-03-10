@@ -1,3 +1,26 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2015-? suhetao
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 #include "Control.h"
 #include "FastMath.h"
 
@@ -56,29 +79,29 @@ void Matrix_Inv(float *A, int n)
 	int kn, kk;
 	int ln, lk;
 
-	for (k = 1; k <= n; ++k){
+	for (k = 0; k < n; ++k){
 		kn = k * n;
 		kk = kn + k;
 
 		d = 1.0f / A[kk];
 		A[kk] = d;
 
-		for (i = 1; i <= n; ++i){
+		for (i = 0; i < n; ++i){
 			if (i != k){
 				A[kn + i] *= -d;
 			}
 		}
-		for (i = 1; i <= n; ++i){
+		for (i = 0; i < n; ++i){
 			if ( i != k){
 				A[i * n + k] *= d;
 			}
 		}
-		for (i = 1; i <= n; ++i){
+		for (i = 0; i < n; ++i){
 			if (i != k){
 				ln = i * n;
 				lk = ln + k;
 
-				for (j = 1; j <= n; ++j){
+				for (j = 0; j < n; ++j){
 					if (j != k ){
 						A[ln + j] += A[lk] * A[kn + j] / d; 
 					}
@@ -86,7 +109,11 @@ void Matrix_Inv(float *A, int n)
 			}
 		}
 	}
-} 
+}
+
+static QuadrotorParameter gQuadrotorParameter = {
+	0,
+};
 
 void EulerConv(float* dt, float *deta)
 {
@@ -126,7 +153,7 @@ void EulerConv(float* dt, float *deta)
 	deta[YAW] = psi;
 }
 
-void TorqueConv(float *eta, float *deta, float *I, float *dt)
+void TorqueConv(float *eta, float *deta, float *dt)
 {
 	float sphi, cphi;
 	float stht, ctht;
@@ -134,6 +161,7 @@ void TorqueConv(float *eta, float *deta, float *I, float *dt)
 	
 	float C[9];
 	float sum[9];
+	float* I = gQuadrotorParameter.I;
 	
 	FastSinCos(eta[ROLL], &sphi, &cphi);
 	FastSinCos(eta[PITCH], &stht, &ctht);
@@ -159,13 +187,14 @@ void TorqueConv(float *eta, float *deta, float *I, float *dt)
 	dt[2] = sum[0] * deta[ROLL] + sum[1] * deta[PITCH] + sum[2] * deta[YAW];
 }
 
-void ForceConv(float *eta, float dz, float m, float *df)
+void ForceConv(float *eta, float dz, float *df)
 {
 	float sphi, cphi;
 	float stht, ctht;
 	float spsi, cpsi;
 	
 	float R[9];
+	float m = gQuadrotorParameter.m;
 	
 	FastSinCos(eta[ROLL], &sphi, &cphi);
 	FastSinCos(eta[PITCH], &stht, &ctht);
@@ -183,10 +212,13 @@ void ForceConv(float *eta, float dz, float m, float *df)
 	*df = R[8] * dz;
 }
 
-void TorqueInv(float *dt, float df, float b, float d, float l, float *domega)
+void TorqueInv(float *dt, float df, float *domega)
 {
 	float T[16];
 	float u[4];
+	float b = gQuadrotorParameter.b;
+	float d = gQuadrotorParameter.d;
+	float l = gQuadrotorParameter.l;
 
 	T[0] = b; T[1] = b; T[2] = b; T[3] = b;
 	T[4] = 0; T[5] = -l * b; T[6] = 0; T[7] = l * b;
@@ -204,15 +236,27 @@ void TorqueInv(float *dt, float df, float b, float d, float l, float *domega)
 	domega[3] = T[12] * u[0] + T[13] * u[1] + T[14] * u[2] + T[15] * u[3];
 }
 
-//////////////////////////////////////////////////////////////////////////
-void QuadrotorDynamics(float* dv, float *eta, float *deta, float *p, float *dp, float *omega)
+// Newton-Euler model
+
+void QuadrotorControl(float* task, float *q, float *u)
 {
-	//(Jp + n * N ^ 2 * Jm) * dwp = -Ke * Km / R * n * N ^ 2 * wp - d * wp ^ 2 + Km / R * n * N * v
-	//Jtp = Jp + n * N ^ 2 * Jm
-	//first order taylor series method
-	//dwp = Ap * wp + Bp * v + Cp
-	//Ap = -Ke * Km * n * N ^ 2 / (Jtp * R) - 2 * d / Jtp * Wh
-	//Bp = Km * n * N / (Jtp * R)
-	//Cp = d / Jtp * Wh ^ 2
+	task[0] = PID_Calculate(&gQuadrotorParameter.PostionX, gQuadrotorParameter.X - task[0]);
+	task[1] = PID_Calculate(&gQuadrotorParameter.PostionY, gQuadrotorParameter.Y - task[1]);
+	task[2] = PID_Calculate(&gQuadrotorParameter.PostionZ, gQuadrotorParameter.Z - task[2]);
 	
+	//EulerConv(
+	// quadrotor linear acceleration along zE WRT E-frame
+	// quadrotor angular acceleration around x2 WRT E-frame (roll)
+	// theta quadrotor angular acceleration around y1 WRT E-frame (pitch)
+	// quadrotor angular acceleration around zE WRT E-frame (yaw)
+	
+	// The first one shows how the quadrotor accelerates according to
+	// the basic movement commands given.
+
+
+	// The second system of equations explains how the basic movements are related
+	// to the propellers’ squared speed.
+
+	// The third equation takes into accounts the motors dynamics and shows the
+	// relation between propellers’ speed and motors’ voltage.
 }

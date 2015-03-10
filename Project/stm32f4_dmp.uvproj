@@ -560,6 +560,11 @@
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\Control.c</FilePath>
             </File>
+            <File>
+              <FileName>PID.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\PID.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

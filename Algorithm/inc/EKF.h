@@ -94,4 +94,12 @@ void EKF_Init(EKF_Filter* ekf, float32_t *q, float32_t *gyro);
 void EFK_Update(EKF_Filter* ekf, float32_t *q, float32_t *gyro, float32_t *accel, float32_t *mag, float32_t dt);
 void EKF_GetAngle(EKF_Filter* ekf, float32_t* rpy);
 
+__inline void EKF_GetQ(EKF_Filter* efk, float32_t* Q)
+{
+	Q[0] = efk->X_f32[0];
+	Q[1] = efk->X_f32[1];
+	Q[2] = efk->X_f32[2];
+	Q[3] = efk->X_f32[3];
+}
+
 #endif

@@ -72,6 +72,20 @@ float FastAtan2(float y, float x);
 float FastSqrtI(float x);
 float FastSqrt(float x);
 
+float FastSin(float x);
+float FastCos(float x);
 void FastSinCos(float x, float *sinVal, float *cosVal);
+
+typedef union {
+	unsigned int i;
+	float f;
+}L2F;
+
+__inline float FastAbs(float x){
+	L2F y;
+	y.f = x;
+	y.i = y.i & 0x7FFFFFFF;
+	return (float)y.f;
+}
 
 #endif
