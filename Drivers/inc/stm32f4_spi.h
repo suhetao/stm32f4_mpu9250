@@ -41,7 +41,11 @@ typedef struct SPI_DRIVER_T
 	RCC_AXXPeriphClockCmd GPIO_CLK;
 	uint32_t GPIO_Func;
 	
+	GPIO_TypeDef* Gpio_CS;
+	RCC_AXXPeriphClockCmd GPIO_CS_CLK;
+	uint32_t CS_Func;
 	uint16_t CS_Pin;
+	
 	uint16_t SCK_Pin;
 	uint16_t MISO_Pin;
 	uint16_t MOSI_Pin;
@@ -50,6 +54,7 @@ typedef struct SPI_DRIVER_T
 	uint16_t MOSI_Src;
 	
 	uint16_t SPI_Prescaler;
+	uint16_t SPI_DataSize;
 
 #ifdef SPIx_USE_DMA
 	RCC_AXXPeriphClockCmd DMA_CLK;
@@ -71,15 +76,14 @@ typedef struct SPI_DRIVER_T
 
 __inline void CHIP_SELECT(SPI_Driver* SPIx)
 {
-	GPIO_ResetBits((SPIx)->Gpio, (SPIx)->CS_Pin);
+	GPIO_ResetBits((SPIx)->Gpio_CS, (SPIx)->CS_Pin);
 }
 
 __inline void CHIP_DESELECT(SPI_Driver* SPIx){
-	GPIO_SetBits((SPIx)->Gpio, (SPIx)->CS_Pin);
+	GPIO_SetBits((SPIx)->Gpio_CS, (SPIx)->CS_Pin);
 }
 
 void SPIx_Init(SPI_Driver* SPIx);
-void SPIx_SetDivisor(SPI_Driver* SPIx, uint16_t Prescaler);
 void SPIx_DeInit(SPI_Driver* SPIx);
 uint8_t SPIx_Read_Reg(SPI_Driver* SPIx, uint8_t reg);
 void SPIx_Write_Reg(SPI_Driver* SPIx, uint8_t regAddr, uint8_t data);
@@ -88,5 +92,8 @@ void SPIx_Read_Regs(SPI_Driver* SPIx, uint8_t regAddr, uint8_t length, uint8_t* 
 void SPIx_DMA_Read_Regs(SPI_Driver* SPIx, uint8_t regAddr, uint8_t length, uint8_t* buffer);
 #endif
 uint8_t SPIx_SendByte(SPI_Driver* SPIx, uint8_t byte);
+uint16_t SPIx_SendWord(SPI_Driver* SPIx, uint16_t word);
+void SPIx_ReadBytes(SPI_Driver* SPIx, uint8_t length, uint8_t* buffer);
+void SPIx_SetDivisor(SPI_Driver* SPIx, uint16_t Prescaler);
 
 #endif

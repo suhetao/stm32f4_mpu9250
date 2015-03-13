@@ -445,6 +445,11 @@
               <FileType>1</FileType>
               <FilePath>..\Application\src\stm32f4_string.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4_ms5611.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Application\src\stm32f4_ms5611.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -564,6 +569,11 @@
               <FileName>PID.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\PID.c</FilePath>
+            </File>
+            <File>
+              <FileName>INS_EKF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\INS_EKF.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -26,6 +26,12 @@ EKF(Extended Kalman filter) / Unscented Kalman Filter(UKF) / Cubature Kalman Fil
 	3-mesurement for accelerometer
 	3-mesurement for magnetometer
 
-5.Other stuff
+5.Add a GPS/ins implement via ekf fusion algorithm
 
+	16-state ekf algorithm: 4 quaternion, 3D postion, 3D velocity, 3-axis gyroscope bais and 3-axis accelerometer bais
+	9-mesurement for magnetometer, 3D postion and 3D velocity from gps and altitude
+
+6.Other stuff
+
+	add ms5611 spi driver
 	using 4-order Runge_Kutta to slove the quaternion differential equation.

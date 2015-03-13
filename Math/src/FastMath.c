@@ -23,9 +23,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "FastMath.h"
 
+//translate from ADI's dsp library.
 float FastLn(float x)
 {
-	L2F e;	
+	L2F e;
 	float xn;
 	float	z;
 	float	w;

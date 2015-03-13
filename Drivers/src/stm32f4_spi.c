@@ -50,12 +50,13 @@ void SPIx_Init(SPI_Driver* SPIx)
 	GPIO_InitStructure.GPIO_Pin = SPIx->SCK_Pin | SPIx->MISO_Pin | SPIx->MOSI_Pin;
 	GPIO_Init(SPIx->Gpio, &GPIO_InitStructure);
 
+	SPIx->GPIO_CS_CLK(SPIx->CS_Func, ENABLE);
 	// Configure GPIO PIN for Chip select
 	GPIO_InitStructure.GPIO_Pin = SPIx->CS_Pin;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(SPIx->Gpio, &GPIO_InitStructure);
+	GPIO_Init(SPIx->Gpio_CS, &GPIO_InitStructure);
 
 	// Chip DeSelect high
 	CHIP_DESELECT(SPIx);
@@ -64,7 +65,7 @@ void SPIx_Init(SPI_Driver* SPIx)
 	SPI_I2S_DeInit(SPIx->SPI);
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
 	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
-	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+	SPI_InitStructure.SPI_DataSize = SPIx->SPI_DataSize;
 	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
 	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
 	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
@@ -240,8 +241,8 @@ void SPIx_DMA_Read_Regs(SPI_Driver* SPIx, uint8_t regAddr, uint8_t length, uint8
 }
 #endif
 
-uint8_t SPIx_SendByte(SPI_Driver* SPIx, uint8_t byte) {
-
+uint8_t SPIx_SendByte(SPI_Driver* SPIx, uint8_t byte)
+{
 	// Loop while DR register in not emplty
 	while (SPI_I2S_GetFlagStatus(SPIx->SPI, SPI_I2S_FLAG_TXE) == RESET);
 	// Send byte through the SPI1 peripheral
@@ -250,6 +251,34 @@ uint8_t SPIx_SendByte(SPI_Driver* SPIx, uint8_t byte) {
 	while (SPI_I2S_GetFlagStatus(SPIx->SPI, SPI_I2S_FLAG_RXNE) == RESET);
 	// Return the byte read from the SPI bus
 	return SPI_I2S_ReceiveData(SPIx->SPI);
+}
+
+uint16_t SPIx_SendWord(SPI_Driver* SPIx, uint16_t word)
+{
+	// Loop while DR register in not emplty
+	while (SPI_I2S_GetFlagStatus(SPIx->SPI, SPI_I2S_FLAG_TXE) == RESET);
+	// Send byte through the SPI1 peripheral
+	SPI_I2S_SendData(SPIx->SPI, word);
+	// Wait to receive a byte
+	while (SPI_I2S_GetFlagStatus(SPIx->SPI, SPI_I2S_FLAG_RXNE) == RESET);
+	// Return the byte read from the SPI bus
+	return SPI_I2S_ReceiveData(SPIx->SPI);
+}
+
+void SPIx_ReadBytes(SPI_Driver* SPIx,uint8_t length, uint8_t* buffer)
+{
+  uint8_t i = 0;
+
+  // Select Mems Sensor: Chip Select low 
+	CHIP_SELECT(SPIx);
+	
+  while(i < length){
+    // Read a byte from the MEMS Sensor
+    buffer[i] = SPIx_SendByte(SPIx, DUMMY_BYTE);  
+    i++;
+  }
+  // Deselect Mems Sensor: Chip Select high
+  CHIP_DESELECT(SPIx);
 }
 
 void SPIx_SetDivisor(SPI_Driver* SPIx, uint16_t Prescaler)
