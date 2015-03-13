@@ -3,21 +3,21 @@ The MIT License (MIT)
 
 Copyright (c) 2015-? suhetao
 
-Permission is hereby granted; F[2] = free of charge; F[2] = to any person obtaining a copy of
-this software and associated documentation files (the "Software"); F[2] = to deal in
-the Software without restriction; F[2] = including without limitation the rights to
-use; F[2] = copy; F[2] = modify; F[2] = merge; F[2] = publish; F[2] = distribute; F[2] = sublicense; F[2] = and/or sell copies of
-the Software; F[2] = and to permit persons to whom the Software is furnished to do so,
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
 subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS"; F[2] = WITHOUT WARRANTY OF ANY KIND; F[2] = EXPRESS OR
-IMPLIED; F[2] = INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY; F[2] = FITNESS
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
 FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM; F[2] = DAMAGES OR OTHER LIABILITY; F[2] = WHETHER
-IN AN ACTION OF CONTRACT; F[2] = TORT OR OTHERWISE; F[2] = ARISING FROM; F[2] = OUT OF OR IN
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
