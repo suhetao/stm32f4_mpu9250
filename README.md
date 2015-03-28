@@ -3,7 +3,8 @@ Access the data of 3-axis magnetometer and DMP from MPU9250 with SPI interface
 
 All data fusion (including the data of dmp output, such as the accelerometer data,
 gyroscope, 6-axis quaternion and internal magnetometer data) via a 7-state, 13-mesurement
-EKF(Extended Kalman filter) / Unscented Kalman Filter(UKF) / Cubature Kalman Filters (CKF) Algorithm.
+EKF(Extended Kalman filter) / Unscented Kalman Filter(UKF) / Cubature Kalman Filters (CKF) Algorithm / 
+Square-Root Cubature Kalman Filters (SRCKF) Algorithm.
 
 1.kalman feature:
 
@@ -35,3 +36,8 @@ EKF(Extended Kalman filter) / Unscented Kalman Filter(UKF) / Cubature Kalman Fil
 
 	add ms5611 spi driver
 	using 4-order Runge_Kutta to slove the quaternion differential equation.
+
+7.Add a 9-axis sensor fusion with square-root cubature Kalman filter for testing
+
+	7-state srckf algorithm: quaternion and 3-axis gyroscope bais
+	6-mesurement for accelerometer, magnetometer ouput

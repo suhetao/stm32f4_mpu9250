@@ -71,8 +71,8 @@ arm_status arm_mat_remainlower_f32(arm_matrix_instance_f32* s)
 	int nrows = s->numRows;
 	int ncols = s->numCols;
 	int k, p;
-	float *p_Uk0; // pointer to U[k][0]
-	float *p_Ukp; // pointer to U[k][p]  
+	float32_t *p_Uk0; // pointer to U[k][0]
+	float32_t *p_Ukp; // pointer to U[k][p]  
 
 	if (nrows != ncols){
 		return ARM_MATH_SIZE_MISMATCH;
@@ -148,7 +148,7 @@ void arm_mat_getsubmatrix_f32(arm_matrix_instance_f32* s, arm_matrix_instance_f3
 	int mrows = s->numRows;
 	int mcols = s->numCols;
 	int ncols = a->numCols;
-	
+
 	float32_t *S = s->pData;
 	float32_t *A = a->pData;
 
@@ -165,14 +165,14 @@ void arm_mat_setsubmatrix_f32(arm_matrix_instance_f32* a, arm_matrix_instance_f3
 	int mcols = s->numCols;
 	int ncols = a->numCols;
 	int i,j;
-	
+
 	float32_t *S = s->pData;
 	float32_t *A = a->pData;
 
 	for(A += row * ncols + col, i = 0; i < mrows; A += ncols, i++){
-      for(j = 0; j < mcols; j++){
-				*(A + j) = *S++;
-			}
+		for(j = 0; j < mcols; j++){
+			*(A + j) = *S++;
+		}
 	}
 }
 
@@ -190,4 +190,84 @@ void arm_mat_setcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t co
 	float32_t *S = s->pData;
 	int i = 0;
 	for (S += col; i < nrows; S += ncols, i++) *S = x[i];
+}
+
+void arm_mat_cumsum_f32(arm_matrix_instance_f32* s, float32_t *tmp, float32_t *x)
+{
+	int nrows = s->numRows, ncols = s->numCols;
+	int i, j;
+	//zero x;
+	for(i = 0; i < nrows; i++){
+		x[i] = 0.0f;
+	}
+	for(i = 0; i < ncols; i++){
+		arm_mat_getcolumn_f32(s, tmp, i);
+		for(j = 0; j < nrows; j++){
+			x[j] += tmp[j];
+		}
+	}
+}
+
+int arm_mat_qr_decompositionT_f32(arm_matrix_instance_f32 *A, arm_matrix_instance_f32 *R)
+{
+	int minor;
+	int row, col;
+	int m = A->numCols;
+	int n = A->numRows;
+	int min;
+	float32_t xNormSqr;
+	float32_t a;
+	float32_t alpha;
+
+	// clear R
+	arm_fill_f32(0, R->pData, R->numRows * R->numCols);
+	if(m < n){
+		min = m;
+	}
+	else{
+		min = n;
+	}
+
+	for (minor = 0; minor < min; minor++) {
+		xNormSqr = 0.0f;
+		for (row = minor; row < m; row++){
+			xNormSqr += A->pData[minor * m + row] * A->pData[minor * m + row];
+		}
+		
+		arm_sqrt_f32(xNormSqr, &a);
+		if (A->pData[minor * m + minor] > 0.0f){
+			a = -a;
+		}
+
+		if (a != 0.0f) {
+			R->pData[minor * R->numCols + minor] = a;
+			A->pData[minor * m + minor] -= a;
+			for (col = minor+1; col < n; col++) {
+				alpha = 0.0f;
+				for (row = minor; row < m; row++){
+					alpha -= A->pData[col * m + row] * A->pData[minor * m + row];
+				}
+				alpha /= a * A->pData[minor * m + minor];
+
+				// subtract the column vector alpha * v from x.
+				for (row = minor; row < m; row++){
+					A->pData[col * m + row] -= alpha * A->pData[minor * m + row];
+				}
+			}
+		}
+		// rank deficient
+		else{
+			return 0;
+		}
+	}
+	
+	// Form the matrix R of the QR-decomposition.
+	// R is supposed to be m x n, but only calculate n x n
+	// copy the upper triangle of A
+	for (row = min-1; row >= 0; row--){
+		for (col = row+1; col < n; col++){
+			R->pData[row * R->numCols + col] = A->pData[col * m + row];
+		}
+	}
+	return 1;
 }

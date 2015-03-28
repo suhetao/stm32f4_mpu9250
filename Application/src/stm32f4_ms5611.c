@@ -137,7 +137,7 @@ u8 MS5611_CRC4(u32 n_prom[])
 	u32 crc_read; // original value of the crc
 	u8 n_bit;
 	n_rem = 0x00;
-	crc_read=n_prom[7]; //save read CRC
+	crc_read = n_prom[7]; //save read CRC
 	n_prom[7]=(0xFF00 & (n_prom[7])); //CRC byte is replaced by 0
 	for(cnt = 0; cnt < 16; cnt++){ // operation is performed on bytes
 		// choose LSB or MSB

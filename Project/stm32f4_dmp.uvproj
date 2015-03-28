@@ -450,6 +450,11 @@
               <FileType>1</FileType>
               <FilePath>..\Application\src\stm32f4_ms5611.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4_gps.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Application\src\stm32f4_gps.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -541,11 +546,6 @@
           <GroupName>Algorithm</GroupName>
           <Files>
             <File>
-              <FileName>CKF.C</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Algorithm\src\CKF.C</FilePath>
-            </File>
-            <File>
               <FileName>EKF.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\EKF.c</FilePath>
@@ -574,6 +574,16 @@
               <FileName>INS_EKF.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\INS_EKF.c</FilePath>
+            </File>
+            <File>
+              <FileName>SRCKF.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\SRCKF.c</FilePath>
+            </File>
+            <File>
+              <FileName>CKF.C</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Algorithm\src\CKF.C</FilePath>
             </File>
           </Files>
         </Group>

@@ -168,20 +168,14 @@ void EKF_AHRSUpdate(float *gyro, float *accel, float *mag, float dt)
 	float hx, hy, hz;
 	float bx, bz;
 	//
-	float h[EKF_MEASUREMENT_DIM];
 	float SI[EKF_MEASUREMENT_DIM * EKF_MEASUREMENT_DIM] = {0};
 	//////////////////////////////////////////////////////////////////////////
 	halfdx = halfdt * (gyro[0] - X[4]);
 	halfdy = halfdt * (gyro[1] - X[5]);
 	halfdz = halfdt * (gyro[2] - X[6]);
-	neghalfdx = -halfdx;
-	neghalfdy = -halfdy;
-	neghalfdz = -halfdz;
+	neghalfdx = -halfdx; neghalfdy = -halfdy; neghalfdz = -halfdz;
 	//
-	q0 = X[0];
-	q1 = X[1];
-	q2 = X[2];
-	q3 = X[3];
+	q0 = X[0]; q1 = X[1]; q2 = X[2]; q3 = X[3];
 
 	//////////////////////////////////////////////////////////////////////////
 	//Extended Kalman Filter: Prediction Step
@@ -200,23 +194,13 @@ void EKF_AHRSUpdate(float *gyro, float *accel, float *mag, float dt)
 	X[3] *= norm;
 
 	//populate F jacobian
-	halfdtq0 = halfdt * X[0];
-	neghalfdtq0 = -halfdtq0;
-	halfdtq1 = halfdt * X[1];
-	neghalfdtq1 = -halfdtq1;
-	halfdtq2 = halfdt * X[2];
-	neghalfdtq2 = -halfdtq2;
-	halfdtq3 = halfdt * X[3];
-	neghalfdtq3 = -halfdtq3;
+	halfdtq0 = halfdt * q0; halfdtq1 = halfdt * q1; halfdtq2 = halfdt * q2; halfdtq3 = halfdt * q3;
+	neghalfdtq0 = -halfdtq0; neghalfdtq1 = -halfdtq1; neghalfdtq2 = -halfdtq2; neghalfdtq3 = -halfdtq3;
 
-	/* F[0] = 1.0f; */ F[1] = neghalfdx; F[2] = neghalfdy; F[3] = neghalfdz;	
-	F[4] = halfdtq1; F[5] = halfdtq2; F[6] = halfdtq3;
-	F[7] = halfdx; /* F[8] = 1.0f; */ F[9] = halfdz;	F[10] = neghalfdy;
-	F[11] = neghalfdtq0; F[12] = halfdtq3; F[13] = neghalfdtq2;
-	F[14] = halfdy;	F[15] = neghalfdz;	/* F[16] = 1.0f; */ F[17] = halfdx;
-	F[18] = neghalfdtq3; F[19] = neghalfdtq0; F[20] = halfdtq1;
-	F[21] = halfdz; F[22] = halfdy; F[23] = neghalfdx; /* F[24] = 1.0f; */
-	F[25] = halfdtq2; F[26] = neghalfdtq1; F[27] = neghalfdtq0;
+	/* F[0] = 1.0f; */ F[1] = neghalfdx; F[2] = neghalfdy; F[3] = neghalfdz; F[4] = halfdtq1; F[5] = halfdtq2; F[6] = halfdtq3;
+	F[7] = halfdx; /* F[8] = 1.0f; */ F[9] = halfdz;	F[10] = neghalfdy; F[11] = neghalfdtq0; F[12] = halfdtq3; F[13] = neghalfdtq2;
+	F[14] = halfdy;	F[15] = neghalfdz;	/* F[16] = 1.0f; */ F[17] = halfdx; F[18] = neghalfdtq3; F[19] = neghalfdtq0; F[20] = halfdtq1;
+	F[21] = halfdz; F[22] = halfdy; F[23] = neghalfdx; /* F[24] = 1.0f; */ F[25] = halfdtq2; F[26] = neghalfdtq1; F[27] = neghalfdtq0;
 
 	//covariance time propagation
 	//P = F*P*F' + Q;
@@ -238,25 +222,14 @@ void EKF_AHRSUpdate(float *gyro, float *accel, float *mag, float dt)
 	
 	//Reference field calculation	
 	//auxiliary variables to avoid repeated arithmetic
-	_2q0 = 2.0f * X[0];
-	_2q1 = 2.0f * X[1];
-	_2q2 = 2.0f * X[2];
-	_2q3 = 2.0f * X[3];
+	_2q0 = 2.0f * X[0]; _2q1 = 2.0f * X[1]; _2q2 = 2.0f * X[2]; _2q3 = 2.0f * X[3];
 	//
-	q0q0 = X[0] * X[0];
-	q0q1 = X[0] * X[1];
-	q0q2 = X[0] * X[2];
-	q0q3 = X[0] * X[3];
-	q1q1 = X[1] * X[1];
-	q1q2 = X[1] * X[2];
-	q1q3 = X[1] * X[3];
-	q2q2 = X[2] * X[2];
-	q2q3 = X[2] * X[3];
+	q0q0 = X[0] * X[0]; q0q1 = X[0] * X[1]; q0q2 = X[0] * X[2]; q0q3 = X[0] * X[3];
+	q1q1 = X[1] * X[1]; q1q2 = X[1] * X[2]; q1q3 = X[1] * X[3];
+	q2q2 = X[2] * X[2]; q2q3 = X[2] * X[3];
 	q3q3 = X[3] * X[3];
 
-	_2mx = 2.0f * mag[0];
-	_2my = 2.0f * mag[1];
-	_2mz = 2.0f * mag[2];
+	_2mx = 2.0f * mag[0]; _2my = 2.0f * mag[1]; _2mz = 2.0f * mag[2];
 
 	hx = _2mx * (0.5f - q2q2 - q3q3) + _2my * (q1q2 - q0q3) + _2mz *(q1q3 + q0q2);
 	hy = _2mx * (q1q2 + q0q3) + _2my * (0.5f - q1q1 - q3q3) + _2mz * (q2q3 - q0q1);
@@ -264,39 +237,28 @@ void EKF_AHRSUpdate(float *gyro, float *accel, float *mag, float dt)
 	bx = FastSqrt(hx * hx + hy * hy);
 	bz = hz;
 	//
-	h[0] = -2.0f * (q1q3 - q0q2);
-	h[1] = -2.0f * (q2q3 + q0q1);
-	h[2] = 1.0f - 2.0f * (q0q0 + q3q3);
-	h[3] = bx * (1.0f - 2.0f * (q2q2 + q3q3)) + bz * ( 2.0f * (q1q3 - q0q2));
-	h[4] = bx * (2.0f * (q1q2 - q0q3)) + bz * (2.0f * (q2q3 + q0q1));
-	h[5] = bx * (2.0f * (q1q3 + q0q2)) + bz * (1.0f - 2.0f * (q1q1 + q2q2));
+	Y[0] = -2.0f * (q1q3 - q0q2);
+	Y[1] = -2.0f * (q2q3 + q0q1);
+	Y[2] = 1.0f - 2.0f * (q0q0 + q3q3);
+	Y[3] = bx * (1.0f - 2.0f * (q2q2 + q3q3)) + bz * ( 2.0f * (q1q3 - q0q2));
+	Y[4] = bx * (2.0f * (q1q2 - q0q3)) + bz * (2.0f * (q2q3 + q0q1));
+	Y[5] = bx * (2.0f * (q1q3 + q0q2)) + bz * (1.0f - 2.0f * (q1q1 + q2q2));
 	
-	Y[0] = accel[0] - h[0];
-	Y[1] = accel[1] - h[1];
-	Y[2] = accel[2] - h[2];
-	Y[3] = mag[0] - h[3];
-	Y[4] = mag[1] - h[4];
-	Y[5] = mag[2] - h[5];
+	Y[0] = accel[0] - Y[0];
+	Y[1] = accel[1] - Y[1];
+	Y[2] = accel[2] - Y[2];
+	Y[3] = mag[0] - Y[3];
+	Y[4] = mag[1] - Y[4];
+	Y[5] = mag[2] - Y[5];
 	
 	//populate H jacobian
 	H[0] = _2q2; H[1] = -_2q3; H[2] = _2q0; H[3] = -_2q1;
 	H[7] = -_2q1; H[8] = -_2q0; H[9] = -_2q3; H[10] = -_2q2;
 	H[14] = -_2q0; H[15] = _2q1; H[16] = _2q2; H[17] = -_2q3;
 	
-	H[21] = bx * _2q0 - bz * _2q2;
-	H[22] = bx * _2q1 + bz * _2q3;
-	H[23] = -bx * _2q2 - bz * _2q0;
-	H[24] = bz * _2q1 - bx * _2q3;
-	
-	H[28] = bz * _2q1 - bx * _2q3;
-	H[29] = bx * _2q2 + bz * _2q0;	
-	H[30] = bx * _2q1 + bz * _2q3; 
-	H[31] = bz * _2q2 - bx * _2q0;
-
-	H[35] = bx * _2q2 + bz * _2q0;
-	H[36] = bx * _2q3 - bz * _2q1;
-	H[37] = bx * _2q0 - bz * _2q2;
-	H[38] = bx * _2q1 + bz * _2q3;
+	H[21] = bx * _2q0 - bz * _2q2; H[22] = bx * _2q1 + bz * _2q3; H[23] = -bx * _2q2 - bz * _2q0; H[24] = bz * _2q1 - bx * _2q3;
+	H[28] = bz * _2q1 - bx * _2q3; H[29] = bx * _2q2 + bz * _2q0;	 H[30] = bx * _2q1 + bz * _2q3; H[31] = bz * _2q2 - bx * _2q0;
+	H[35] = bx * _2q2 + bz * _2q0; H[36] = bx * _2q3 - bz * _2q1; H[37] = bx * _2q0 - bz * _2q2; H[38] = bx * _2q1 + bz * _2q3;
 	
 	//kalman gain calculation
 	//K = P * H' / (R + H * P * H')

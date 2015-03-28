@@ -40,7 +40,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
-#define USE_9AXIS_EKF
+#define USE_SRCKF
+//#define USE_9AXIS_EKF
 
 //for doctor's mini Quadrotor
 //#define USE_6AXIS_EKF
@@ -54,6 +55,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "UKF.h"
 #elif defined USE_CKF
 #include "CKF.h"
+#elif defined USE_SRCKF
+#include "SRCKF.H"
 #elif defined USE_6AXIS_EKF
 #include "miniIMU.h"
 #elif defined USE_6AXIS_FP_EKF
@@ -104,8 +107,6 @@ static __inline unsigned short inv_orientation_matrix_to_scalar(const signed cha
     return scalar;
 }
 
-float f;
-
 int main(void)
 {
 	//PLL_M PLL_N PLL_P PLL_Q
@@ -140,6 +141,8 @@ int main(void)
 	UKF_Filter ukf;
 #elif defined USE_CKF
 	CKF_Filter ckf;
+#elif defined USE_SRCKF
+	SRCKF_Filter srckf;
 #endif
 
 	unsigned long ulNowTime = 0;
@@ -164,6 +167,8 @@ int main(void)
 #elif defined USE_CKF
 	//Create a new CKF object;
 	CKF_New(&ckf);
+#elif defined USE_SRCKF
+	SRCKF_New(&srckf);
 #endif
 	//////////////////////////////////////////////////////////////////////////
 	//Init DMP
@@ -241,6 +246,8 @@ int main(void)
 				UKF_Init(&ukf, fRealQ, fRealGyro);
 #elif defined USE_CKF
 				CKF_Init(&ckf, fRealQ, fRealGyro);
+#elif defined USE_SRCKF
+				SRCKF_Init(&srckf, fRealAccel, fRealMag);
 #elif defined USE_6AXIS_EKF
 				EKF_IMUInit(fRealAccel, fRealGyro);
 #elif defined USE_6AXIS_FP_EKF
@@ -260,6 +267,8 @@ int main(void)
 				UKF_Update(&ukf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
 #elif defined USE_CKF
 				CKF_Update(&ckf, fRealQ, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
+#elif defined USE_SRCKF
+				SRCKF_Update(&srckf, fRealGyro, fRealAccel, fRealMag, fDeltaTime);
 #elif defined USE_6AXIS_EKF
 				EKF_IMUUpdate(fRealGyro, fRealAccel, fDeltaTime);
 #elif defined USE_6AXIS_FP_EKF
@@ -278,6 +287,9 @@ int main(void)
 #elif defined USE_CKF
 			CKF_GetAngle(&ckf, fRPY);
 			CKF_GetQ(&ckf, fQ);
+#elif defined USE_SRCKF
+			SRCKF_GetAngle(&srckf, fRPY);
+			SRCKF_GetQ(&srckf, fQ);
 #elif defined USE_6AXIS_EKF
 			EKF_IMUGetAngle(fRPY);
 			EKF_IMUGetQ(fQ);

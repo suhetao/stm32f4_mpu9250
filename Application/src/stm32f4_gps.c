@@ -21,24 +21,5 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _MATRIX_H_
-#define _MATRIX_H_
+#include "stm32f4_gps.h"
 
-#include "arm_math.h"
-
-void arm_mat_zero_f32(arm_matrix_instance_f32* s);
-arm_status mat_identity(float32_t *pData, uint16_t numRows, uint16_t numCols, float32_t value);
-arm_status arm_mat_identity_f32(arm_matrix_instance_f32* s, float32_t value);
-arm_status arm_mat_fill_f32(arm_matrix_instance_f32* s, float32_t *pData, uint32_t blockSize);
-arm_status arm_mat_chol_f32(arm_matrix_instance_f32* s);
-arm_status arm_mat_remainlower_f32(arm_matrix_instance_f32* s);
-
-void arm_mat_getsubmatrix_f32(arm_matrix_instance_f32* s, arm_matrix_instance_f32 *a, int row, int col);
-void arm_mat_setsubmatrix_f32(arm_matrix_instance_f32* a, arm_matrix_instance_f32 *s, int row, int col);
-
-void arm_mat_getcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col);
-void arm_mat_setcolumn_f32(arm_matrix_instance_f32* s, float32_t *x, uint32_t col);
-void arm_mat_cumsum_f32(arm_matrix_instance_f32* s, float32_t *tmp, float32_t *x);
-int arm_mat_qr_decompositionT_f32(arm_matrix_instance_f32 *A, arm_matrix_instance_f32 *R);
-
-#endif
