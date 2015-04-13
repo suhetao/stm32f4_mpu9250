@@ -98,11 +98,11 @@ void SRCKF_New(SRCKF_Filter* srckf)
 	
 	arm_mat_init_f32(&srckf->XCM, SRCKF_STATE_DIM, SRCKF_CP_POINTS + SRCKF_STATE_DIM, srckf->XCM_f32);
 	//initialise fill SQ
-	arm_mat_setsubmatrix_f32(&srckf->XCM, &srckf->SQ, 0, 0);
+	arm_mat_setsubmatrix_f32(&srckf->XCM, &srckf->SQ, 0, SRCKF_CP_POINTS);
 	
 	arm_mat_init_f32(&srckf->YCM, SRCKF_MEASUREMENT_DIM, SRCKF_CP_POINTS + SRCKF_MEASUREMENT_DIM, srckf->YCM_f32);
 	//initialise fill SR
-	arm_mat_setsubmatrix_f32(&srckf->YCM, &srckf->SR, 0, 0);
+	arm_mat_setsubmatrix_f32(&srckf->YCM, &srckf->SR, 0, SRCKF_CP_POINTS);
 	
 	arm_mat_init_f32(&srckf->XYCM, SRCKF_STATE_DIM, SRCKF_CP_POINTS + SRCKF_MEASUREMENT_DIM, srckf->XYCM_f32);
 	//Kalman gain

@@ -37,10 +37,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //////////////////////////////////////////////////////////////////////////
 //uncomment one
-//#define USE_EKF
+#define USE_EKF
 //#define USE_UKF
 //#define USE_CKF
-#define USE_SRCKF
+//#define USE_SRCKF
 //#define USE_9AXIS_EKF
 
 //for doctor's mini Quadrotor
