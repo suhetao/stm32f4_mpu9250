@@ -21,22 +21,31 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _STM32F4_RCC_H
-#define _STM32F4_RCC_H
+#ifndef __STM32F4_GPIO_H
+#define __STM32F4_GPIO_H
 
+// Includes
 #include "stm32f4xx.h"
+#include "stm32f4_rcc.h"
 
-typedef struct PLL_PARAMS_T
+
+typedef struct GPIO_DRIVER_T
 {
-	uint32_t PLLM;
-	uint32_t PLLN;
-	uint32_t PLLP;
-	uint32_t PLLQ;
+	GPIO_TypeDef* Gpio;
+	RCC_AXXPeriphClockCmd GPIO_CLK;
+	uint32_t GPIO_Func;
+	GPIO_InitTypeDef GPIO_Init;
+}GPIO_Driver;
+
+void GPIOx_Init(GPIO_Driver* GPIOx);
+
+__inline void GPIOx_SetLow(GPIO_Driver* GPIOx)
+{
+	GPIO_ResetBits(GPIOx->Gpio, GPIOx->GPIO_Init.GPIO_Pin);
 }
-PLL_PARAMS;
 
-typedef void (*RCC_AXXPeriphClockCmd)(uint32_t RCC_AXXPeriph, FunctionalState NewState);
-
-void RCC_SystemCoreClockUpdate(PLL_PARAMS params);
+__inline void GPIOx_SetHigh(GPIO_Driver* GPIOx){
+	GPIO_SetBits(GPIOx->Gpio, GPIOx->GPIO_Init.GPIO_Pin);
+}
 
 #endif

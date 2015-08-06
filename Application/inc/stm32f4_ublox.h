@@ -21,22 +21,27 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _STM32F4_RCC_H
-#define _STM32F4_RCC_H
+#ifndef _STM32F4_UBLOX_H
+#define _STM32F4_UBLOX_H
 
 #include "stm32f4xx.h"
+#include "Nema.h"
 
-typedef struct PLL_PARAMS_T
+#define UBLOX_DEFAULT_BAUDRATE (9600)
+#define UBLOX_DEFAULT_TX_BUFFERSIZE (64)
+#define UBLOX_DEFAULT_RX_BUFFERSIZE (512)
+#define UBLOX_DEFAULT_PARSER_MAXSIZE (128)
+
+typedef struct UBLOX_PARSERBUFF
 {
-	uint32_t PLLM;
-	uint32_t PLLN;
-	uint32_t PLLP;
-	uint32_t PLLQ;
-}
-PLL_PARAMS;
+	s8 *Data;
+	u16 Size;
+	u16 Need;
+	u16 Left;
+}Ublox_ParserBuff;
 
-typedef void (*RCC_AXXPeriphClockCmd)(uint32_t RCC_AXXPeriph, FunctionalState NewState);
-
-void RCC_SystemCoreClockUpdate(PLL_PARAMS params);
+void Ublox_Init(void);
+void Ublox_GetMessage(void);
+void Ublox_GetPostion(double *x, double *y, double *z);
 
 #endif

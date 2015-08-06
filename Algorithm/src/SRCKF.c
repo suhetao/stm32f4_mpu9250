@@ -27,14 +27,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune
-#define SRCKF_PQ_INITIAL 0.000001
-#define SRCKF_PW_INITIAL 0.000001
+#define SRCKF_PQ_INITIAL 0.000001f
+#define SRCKF_PW_INITIAL 0.000001f
 
-#define SRCKF_QQ_INITIAL 0.0000045
-#define SRCKF_QW_INITIAL 0.0000025
+#define SRCKF_QQ_INITIAL 0.0000045f
+#define SRCKF_QW_INITIAL 0.0000025f
 
-#define SRCKF_RA_INITIAL 0.07
-#define SRCKF_RM_INITIAL 0.105
+#define SRCKF_RA_INITIAL 0.07f
+#define SRCKF_RM_INITIAL 0.105f
 //////////////////////////////////////////////////////////////////////////
 //
 void SRCKF_New(SRCKF_Filter* srckf)
@@ -54,13 +54,16 @@ void SRCKF_New(SRCKF_Filter* srckf)
 	kesi = (float32_t)SRCKF_STATE_DIM;
 	arm_sqrt_f32(kesi, &kesi);
 	arm_mat_init_f32(&KesiPuls, SRCKF_STATE_DIM, SRCKF_STATE_DIM, KesiPuls_f32);
+	arm_mat_zero_f32(&KesiPuls);
 	arm_mat_init_f32(&KesiMinu, SRCKF_STATE_DIM, SRCKF_STATE_DIM, KesiMinus_f32);
+	arm_mat_zero_f32(&KesiMinu);
 	arm_mat_identity_f32(&KesiPuls, kesi);
 	arm_mat_identity_f32(&KesiMinu, -kesi);
 	arm_mat_init_f32(&srckf->Kesi, SRCKF_STATE_DIM, SRCKF_CP_POINTS, srckf->Kesi_f32);
 	arm_mat_setsubmatrix_f32(&srckf->Kesi, &KesiPuls, 0, 0);
 	arm_mat_setsubmatrix_f32(&srckf->Kesi, &KesiMinu, 0, SRCKF_STATE_DIM);
 	arm_mat_init_f32(&srckf->iKesi, SRCKF_STATE_DIM, 1, srckf->iKesi_f32);
+	arm_mat_zero_f32(&srckf->iKesi);
 	
 	//initialise state covariance
 	arm_mat_init_f32(&srckf->S, SRCKF_STATE_DIM, SRCKF_STATE_DIM, srckf->S_f32);
@@ -111,6 +114,8 @@ void SRCKF_New(SRCKF_Filter* srckf)
 	//state vector
 	arm_mat_init_f32(&srckf->X, SRCKF_STATE_DIM, 1, srckf->X_f32);
 	arm_mat_zero_f32(&srckf->X);
+	arm_mat_init_f32(&srckf->tmpX, SRCKF_STATE_DIM, 1, srckf->tmpX_f32);
+	arm_mat_zero_f32(&srckf->tmpX);
 	//measurement vector
 	arm_mat_init_f32(&srckf->Y, SRCKF_MEASUREMENT_DIM, 1, srckf->Y_f32);
 	arm_mat_zero_f32(&srckf->Y);

@@ -28,7 +28,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 void Delay_Init(void);
 void Delay_Ms(u32 ms);
+void Delay_Us(u32 value);
+
 int Get_Ms(unsigned long *count);
+
+u32 Micros(void);
 u32 Millis(void);
 
 #endif

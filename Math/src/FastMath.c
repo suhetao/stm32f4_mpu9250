@@ -24,9 +24,309 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "FastMath.h"
 
 //translate from ADI's dsp library.
+//////////////////////////////////////////////////////////////////////////
+//Get fraction and integer parts of floating point
+float Modf(float x, float *i)
+{
+	float y;
+	float fract;
+
+	y = x;
+	if (x < (float)0.0){
+		y = -y;
+	}
+
+	if (y >= (float)16777216.0f){
+		*i = x;
+		return (float)0.0f;
+	}
+
+	if (y < (float)1.0f){
+		*i = (float)0.0f;
+		return x;
+	}
+
+	y = (float)((long)(y));
+
+	if (x < (float)0.0f){
+		y = -y;
+	}
+
+	fract = x - y;
+	*i = y;
+
+	return fract;
+}
+
+float FastPow(float x,float y)
+{
+	float tmp;
+	float znum, zden, result;
+	float g, r, u1, u2, v, z;
+	long m, p, negate, y_int, n;
+	long mi, pi, iw1;
+	float y1, y2, w1, w2, w;
+	float *a1, *a2;
+	float xtmp;
+	long *lPtr = (long *)&xtmp;
+	float *fPtr = &xtmp;
+	static const long a1l[] =  {0,            /* 0.0 */
+		0x3f800000,   /* 1.0 */
+		0x3f75257d,   /* 0.9576032757759 */
+		0x3f6ac0c6,   /* 0.9170039892197 */
+		0x3f60ccde,   /* 0.8781260251999 */
+		0x3f5744fc,   /* 0.8408963680267 */
+		0x3f4e248c,   /* 0.8052451610565 */
+		0x3f45672a,   /* 0.7711054086685 */
+		0x3f3d08a3,   /* 0.7384130358696 */
+		0x3f3504f3,   /* 0.7071067690849 */
+		0x3f2d583e,   /* 0.6771277189255 */
+		0x3f25fed6,   /* 0.6484197378159 */
+		0x3f1ef532,   /* 0.6209288835526 */
+		0x3f1837f0,   /* 0.5946035385132 */
+		0x3f11c3d3,   /* 0.5693942904472 */
+		0x3f0b95c1,   /* 0.5452538132668 */
+		0x3f05aac3,   /* 0.5221368670464 */
+		0x3f000000};  /* 0.5 */
+	static const long a2l[] =  {0,            /* 0.0 */
+		0x31a92436,   /* 4.922664054163e-9 */
+		0x336c2a94,   /* 5.498675648141e-8 */
+		0x31a8fc24,   /* 4.918108587049e-9 */
+		0x331f580c,   /* 3.710015050729e-8 */
+		0x336a42a1,   /* 5.454296925222e-8 */
+		0x32c12342,   /* 2.248419050943e-8 */
+		0x32e75623,   /* 2.693110978669e-8 */
+		0x32cf9890};  /* 2.41673490109e-8 */
+
+	a1 = (float *)a1l;
+	a2 = (float *)a2l; 
+	negate = 0;
+
+	if (x == (float)0.0){
+		if (y == (float)0.0){
+			return (float)1.0;
+		}
+		else if (y > (float)0.0){
+			return (float)0.0;
+		}
+		else{
+			return (float)FLT_MAX;
+		}
+	}
+	else if (x < (float)0.0){
+		y_int = (long)(y);
+		if ((float)(y_int) != y){
+			return (float)0.0;
+		}
+
+		x = -x;
+		negate = y_int & 0x1;
+	}
+
+	xtmp = x;
+	m = (*lPtr >> 23);
+	m = m - 126;
+
+	*lPtr = (*lPtr & 0x807fffff) | (126 << 23);
+	g = *fPtr;
+	
+	p = 1;
+	if (g <= a1[9]){
+		p = 9;
+	}
+	if (g <= a1[p + 4]){
+		p = p + 4;
+	}
+	if (g <= a1[p + 2]){
+		p = p + 2;
+	}
+	
+	p = p + 1;
+	znum = g - a1[p];
+	znum = znum - a2[p >> 1];
+
+	zden = g + a1[p];
+
+	p = p - 1;
+
+	z = znum / zden;
+	z = z + z;
+
+	v = z * z;
+
+	r = POWP_COEF2 * v;
+	r = r + POWP_COEF1;
+	r = r * v;
+	r = r * z;
+
+	r = r + LOG2E_MINUS1 * r;
+	u2 = LOG2E_MINUS1 * z;
+	u2 = r + u2;
+	u2 = u2 + z;
+
+	u1 = (float)((m * 16) - p);
+	u1 = u1 * 0.0625f;
+
+	Modf(16.0f * y, &(y1));
+	y1 = y1 * 0.0625f;
+
+	y2 = y - y1;
+
+	w = u1 * y2;
+	tmp = u2 * y;
+	w = tmp + w;
+
+	Modf(16.0f * w, &(w1));
+	w1 = w1 * 0.0625f;
+
+	w2 = w - w1;
+
+	w = u1 * y1;
+	w = w + w1;
+
+	Modf(16.0f * w, &(w1));
+	w1 = w1 * 0.0625f;
+
+	tmp = w - w1;
+	w2 = w2 + tmp;
+
+	Modf(16.0f * w2, &(w));
+	w = w * 0.0625f;
+
+	tmp = w1 + w;
+	tmp = 16.0f * tmp;
+	iw1 = (long)(tmp);
+
+	w2 = w2 - w;
+
+	if (iw1 > POW_BIGNUM){
+		result = (float)FLT_MAX;
+		if (negate == 1){
+			result = -result;
+		}
+		return result;
+	}
+
+	if (w2 > 0){
+		w2 = w2 - 0.0625f;
+		iw1++;
+	}
+
+	if (iw1 < POW_SMALLNUM){
+		return (float)0.0;
+	}
+
+	if (iw1 < 0){
+		mi = 0;
+	}
+	else{
+		mi = 1;
+	}
+	n = iw1 / 16;
+	mi = mi + n;
+	pi = (mi * 16) - iw1;
+
+	z = POWQ_COEF5 * w2;
+	z = z + POWQ_COEF4;
+	z = z * w2;
+	z = z + POWQ_COEF3;
+	z = z * w2;
+	z = z + POWQ_COEF2;
+	z = z * w2;
+	z = z + POWQ_COEF1;
+	z = z * w2;
+
+	z = z * a1[pi + 1];
+	z = a1[pi + 1] + z;
+
+	fPtr = &z;
+	lPtr = (long *)fPtr;
+	n = (*lPtr >> 23) & 0xff;
+	n = n - 127;
+	mi = mi + n;
+	mi = mi + 127;
+
+	mi = mi & 0xff;
+	*lPtr = *lPtr & (0x807fffff);
+	*lPtr = *lPtr | mi << 23;
+
+	result = *fPtr;
+
+	if (negate){
+		result = -result;
+	}
+
+	return result;
+}
+//
+float FastTan(float x)
+{
+    long n;
+    float xn;
+    float f, g;
+    float x_int, x_fract;
+    float result;
+    float xnum, xden;
+
+    if ((x > (float)X_MAX) || (x < (float)-X_MAX)){
+        return (float)0.0;
+    }
+
+    x_int = (float)((long)(x));
+    x_fract = x - x_int;
+
+    g = (float)0.5;
+    if (x <= (float)0.0){
+        g = -g;
+    }
+    n = (long)(x * (float)INV_PI_2 + g);
+    xn = (float)(n);
+
+    f = x_int - xn * PI_2_C1;
+    f = f + x_fract;
+    f = f - xn * PI_2_C2;
+    f = f - xn * PI_2_C3;
+
+    if (f < (float)0.0){
+        g = -f;
+    }
+    else{
+        g = f;
+    }
+    if (g < (float)EPS_FLOAT){
+        if (n & 0x0001){
+            result = -1.0f / f;
+        }
+        else{
+            result = f;
+        }            
+        return result;
+    }
+
+    g = f * f;
+    xnum = g * TANP_COEF2;
+    xnum = xnum + TANP_COEF1;
+    xnum = xnum * g;
+    xnum = xnum * f;
+    xnum = xnum + f;
+
+    xden = g * TANQ_COEF2;
+    xden = xden + TANQ_COEF1;
+    xden = xden * g;
+    xden = xden + TANQ_COEF0;
+
+    if (n & 0x0001){
+        result = xnum;
+        xnum = -xden;
+        xden = result;
+    }
+    result = xnum / xden;
+    return result;
+}
+//
 float FastLn(float x)
 {
-	L2F e;
+	union { unsigned int i; float f;} e;
 	float xn;
 	float	z;
 	float	w;
@@ -189,7 +489,9 @@ float FastAtan2(float y, float x)
 // Quake inverse square root
 float FastSqrtI(float x)
 {
-#if 0
+	//////////////////////////////////////////////////////////////////////////
+	//less accuracy, more faster
+	/*
 	L2F l2f;
 	float xhalf = 0.5f * x;
 	l2f.f = x;
@@ -197,17 +499,12 @@ float FastSqrtI(float x)
 	l2f.i = 0x5f3759df - (l2f.i >> 1);
 	x = l2f.f * (1.5f - xhalf * l2f.f * l2f.f);
 	return x;
-#else
-	/*
-	unsigned int i = 0x5F1F1412 - (*(unsigned int*)&x >> 1);
-	float tmp = *(float*)&i;
-	return tmp * (1.69000231f - 0.714158168f * x * tmp * tmp);
 	*/
-	L2F l2f;
+	//////////////////////////////////////////////////////////////////////////
+	union { unsigned int i; float f;} l2f;
 	l2f.f = x;
 	l2f.i = 0x5F1F1412 - (l2f.i >> 1);
 	return l2f.f * (1.69000231f - 0.714158168f * x * l2f.f * l2f.f);
-#endif
 }
 
 float FastSqrt(float x)
@@ -454,4 +751,33 @@ float FastCos(float x)
 
 	// Return the output value
 	return (cosVal);
+}
+
+Double FastSqrtID(Double dx)
+{
+	Double dy;
+	Double dhalfx = DoubleMul(doubleToDouble(0.5), dx);
+	union { double d; unsigned __int64 i; } u;
+	//
+	u.d = DoubleTodouble(dx);
+	u.i = 0x5fe6ec85e7de30daLL - (u.i >> 1);
+
+	dy = doubleToDouble(u.d);
+	dy = DoubleMul(dy, DoubleSub(doubleToDouble(1.5), DoubleMul(DoubleMul(dhalfx, dy), dy)));
+	//return DoubleDiv(doubleToDouble(1.0), dx);
+	return dy;
+}
+
+Double FastSqrtD(Double dx)
+{
+	Double dy;
+	Double dhalfx = DoubleMul(doubleToDouble(0.5), dx);
+	union { double d; unsigned __int64 i; } u;
+	//
+	u.d = DoubleTodouble(dx);
+	u.i = 0x5fe6ec85e7de30daLL - (u.i >> 1);
+
+	dy = doubleToDouble(u.d);
+	dy = DoubleMul(dy, DoubleSub(doubleToDouble(1.5), DoubleMul(DoubleMul(dhalfx, dy), dy)));
+	return DoubleDiv(doubleToDouble(1.0), dx);
 }

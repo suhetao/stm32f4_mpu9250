@@ -21,22 +21,42 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _STM32F4_RCC_H
-#define _STM32F4_RCC_H
+#ifndef _MAP_H
+#define _MAP_H
 
 #include "stm32f4xx.h"
 
-typedef struct PLL_PARAMS_T
+#include "Double.h"
+
+typedef struct DOUBLEPOINT_T
 {
-	uint32_t PLLM;
-	uint32_t PLLN;
-	uint32_t PLLP;
-	uint32_t PLLQ;
-}
-PLL_PARAMS;
+	Double lat;
+	Double lon;
+}DoublePoint;
 
-typedef void (*RCC_AXXPeriphClockCmd)(uint32_t RCC_AXXPeriph, FunctionalState NewState);
+typedef struct MAP_T
+{
+	//reference point
+	DoublePoint _dPoint;
+	DoublePoint dPoint;
+	
+	DoublePoint _gsPoint;
+	DoublePoint gsPoint;
+	//
+	//reference position
+	Double X, Y;
+	//
+	//coefficient
+	Double a, b, c, bl;
+	//
+	
+}	Map;
 
-void RCC_SystemCoreClockUpdate(PLL_PARAMS params);
+//////////////////////////////////////////////////////////////////////////
+//must init with local two reference points including lat, lon and the length
+//betweeb two reference points 
+void Map_Init(Map* pMap, double x1, double y1, double x2, double y2,
+	double x, double y, double length);
+void Map_GetXY(Map* pMap, double lat, double lon, double *x, double *y);
 
 #endif

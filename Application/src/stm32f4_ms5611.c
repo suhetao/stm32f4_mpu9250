@@ -36,7 +36,12 @@ static SPI_Driver mMS5611 = {
 #ifdef SPIx_USE_DMA
 
 #endif
-	SPI_BaudRatePrescaler_4, GPIO_AF_SPI1
+	{
+		SPI_Direction_2Lines_FullDuplex, SPI_Mode_Master, SPI_DataSize_8b, 
+		SPI_CPOL_High, SPI_CPHA_2Edge, SPI_NSS_Soft, SPI_BaudRatePrescaler_4,
+		SPI_FirstBit_MSB, 7
+	},
+	GPIO_AF_SPI1
 };
 static SPI_Driver* pMS5611 = &mMS5611;
 
@@ -45,11 +50,11 @@ __IO u16 MS5611_C1 = 0, MS5611_C2 = 0, MS5611_C3 = 0, MS5611_C4 = 0, MS5611_C5 =
 void MS5611_Reset(SPI_Driver *MS5611)
 {
 	// Chip Select low 
-	CHIP_SELECT(MS5611);
+	Chip_Select(MS5611);
 	SPIx_SendByte(MS5611, MS5611_RESET);
 	Delay_Ms(3); //2.8ms reload from datasheet
 	// Chip Select high
-	CHIP_DESELECT(MS5611);
+	Chip_DeSelect(MS5611);
 }
 
 u16 MS5611_SPIx_ReadWord(SPI_Driver *MS5611, u8 addr)
@@ -58,12 +63,12 @@ u16 MS5611_SPIx_ReadWord(SPI_Driver *MS5611, u8 addr)
 	u16 value = 0;
 
 	// Chip Select low 
-	CHIP_SELECT(MS5611);
+	Chip_Select(MS5611);
 	SPIx_SendByte(MS5611, addr);
 	data[0] = SPIx_SendByte(MS5611, MS5611_READ);
 	data[1] = SPIx_SendByte(MS5611, MS5611_READ);
 	// Chip Select high
-	CHIP_DESELECT(MS5611);
+	Chip_DeSelect(MS5611);
 
 	value = data[0] << 8 | data[1];
 	return value;
@@ -74,21 +79,21 @@ void MS5611_SPIx_ReadADC(SPI_Driver *MS5611, u8 osr, u32* value)
 	u8 data[3] = {0};
 
 	// Chip Select low 
-	CHIP_SELECT(MS5611);
+	Chip_Select(MS5611);
 	SPIx_SendByte(MS5611, osr);
 	// Chip Select high
-	CHIP_DESELECT(MS5611);
+	Chip_DeSelect(MS5611);
 
 	Delay_Ms(1);
 
 	// Chip Select low 
-	CHIP_SELECT(MS5611);
+	Chip_Select(MS5611);
 	SPIx_SendByte(MS5611, MS5611_READ_ADC);
 	data[0] = SPIx_SendByte(MS5611, MS5611_READ_ADC);
 	data[1] = SPIx_SendByte(MS5611, MS5611_READ_ADC);
 	data[2] = SPIx_SendByte(MS5611, MS5611_READ_ADC);
 	// Chip Select high
-	CHIP_DESELECT(MS5611);
+	Chip_DeSelect(MS5611);
 
 	*value = data[0] << 16 | data[1] << 8 | data[2];
 }
@@ -114,20 +119,87 @@ void MS5611_ReadPROM(SPI_Driver *MS5611)
 	MS5611_C6 = MS5611_SPIx_ReadWord(MS5611, MS5611_READ_PROM_C6);
 	Delay_Ms(1);
 }
+typedef uint64_t u64;
+typedef int64_t s64;
 
-void MS5611_GetTemperatureAndPressure(s32* TEMP, s32 *P)
+void MS5611_GetTemperatureAndPressure(s32* T, s32 *P)
 {
-	s32 D1, D2;
-	int64_t OFF, SENS, dT;
+	u32 D1, D2;
+	s32 dT, TEMP, T2 = 0;
+	s64 OFF, SENS, OFF2 = 0, SENS2 = 0;
+	s32 lowTEMP, verylowTemp;
+	
+	MS5611_SPIx_ReadADC(pMS5611, D1_OSR_256, &D1);
+	MS5611_SPIx_ReadADC(pMS5611, D2_OSR_256, &D2);
+	//////////////////////////////////////////////////////////////////////////
+	//
+	dT = D2 - ((u32)MS5611_C5 << 8);
+	TEMP = 2000 + (((s64)dT * MS5611_C6) >> 23);
+	OFF = ((u32)MS5611_C2 << 16) + ((MS5611_C4 * (s64)dT) >> 7);
+	SENS = ((u32)MS5611_C1 << 15) + ((MS5611_C3 * (s64)dT) >> 8);
+	//
+	*T = TEMP;
+	//////////////////////////////////////////////////////////////////////////
+	//second order temperature compensation
+	if(TEMP < 2000){
+		T2 = (s64)((s64)dT * (s64)dT) >> 31;
+		lowTEMP = TEMP - 2000;
+		lowTEMP *= lowTEMP;
+		OFF2 = (5 * lowTEMP) >> 1;
+		SENS2 = (5 * lowTEMP) >> 2;
+		if(TEMP < -1500){
+			verylowTemp = TEMP + 1500;
+			verylowTemp *= verylowTemp;
+			OFF2 = OFF2 + 7 * verylowTemp;
+			SENS2 = SENS2 + ((11 * verylowTemp) >> 1);
+		}
+		//
+		OFF = OFF - OFF2;
+		SENS = SENS - SENS2;
+		*T = TEMP - T2;
+	}
+	//////////////////////////////////////////////////////////////////////////
+	*P = ((((u64)D1 * SENS) >> 21) - OFF) >> 15;
+}
 
-	MS5611_SPIx_ReadADC(pMS5611, D1_OSR_256, (u32*)&D1);
-	MS5611_SPIx_ReadADC(pMS5611, D2_OSR_256, (u32*)&D2);
-
-	dT = (int64_t)D2 - (int64_t)MS5611_C5 * (1<<8);
-	*TEMP = 2000 + (dT * (int64_t)MS5611_C6) / (1<<23);
-	OFF = (int64_t)MS5611_C2 * (1<<16) + ((int64_t)MS5611_C4 * dT) / (1<<7);
-	SENS = (int64_t)MS5611_C1 * (1<<15) + ((int64_t)MS5611_C3 * dT) / (1<<8);
-	*P = ((D1 * SENS) / (1<<21) - OFF) / (1<<15);
+void MS5611_Cal(s32* T, s32 *P)
+{
+	u32 D1, D2;
+	s32 dT, TEMP, T2 = 0;
+	s64 OFF, SENS, OFF2 = 0, SENS2 = 0;
+	s32 lowTEMP, verylowTemp;
+	
+	MS5611_SPIx_ReadADC(pMS5611, D1_OSR_256, &D1);
+	MS5611_SPIx_ReadADC(pMS5611, D2_OSR_256, &D2);
+	//////////////////////////////////////////////////////////////////////////
+	//
+	dT = D2 - ((u32)MS5611_C5 << 8);
+	TEMP = 2000 + (((s64)dT * MS5611_C6) >> 23);
+	OFF = ((u32)MS5611_C2 << 16) + ((MS5611_C4 * (s64)dT) >> 7);
+	SENS = ((u32)MS5611_C1 << 15) + ((MS5611_C3 * (s64)dT) >> 8);
+	//
+	*T = TEMP;
+	//////////////////////////////////////////////////////////////////////////
+	//second order temperature compensation
+	if(TEMP < 2000){
+		T2 = (s64)((s64)dT * (s64)dT) >> 31;
+		lowTEMP = TEMP - 2000;
+		lowTEMP *= lowTEMP;
+		OFF2 = (5 * lowTEMP) >> 1;
+		SENS2 = (5 * lowTEMP) >> 2;
+		if(TEMP < -1500){
+			verylowTemp = TEMP + 1500;
+			verylowTemp *= verylowTemp;
+			OFF2 = OFF2 + 7 * verylowTemp;
+			SENS2 = SENS2 + ((11 * verylowTemp) >> 1);
+		}
+		//
+		OFF = OFF - OFF2;
+		SENS = SENS - SENS2;
+		*T = TEMP - T2;
+	}
+	//////////////////////////////////////////////////////////////////////////
+	*P = ((((u64)D1 * SENS) >> 21) - OFF) >> 15;
 }
 
 u8 MS5611_CRC4(u32 n_prom[])

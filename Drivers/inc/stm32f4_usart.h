@@ -42,18 +42,21 @@ typedef struct USART_DRIVER_T
 	uint32_t USART_Func;
 	uint32_t USART_BaudRate;
 	
-	GPIO_TypeDef* Gpio;
-	RCC_AXXPeriphClockCmd GPIO_CLK;
-	uint32_t GPIO_Func;
+	GPIO_TypeDef* TX_GPIO;
+	RCC_AXXPeriphClockCmd TX_GPIOClk;
+	uint32_t TX_GPIOFunc;
 	uint16_t TX_Pin;
 	uint16_t TX_Src;
+	
+	GPIO_TypeDef* RX_GPIO;
+	RCC_AXXPeriphClockCmd RX_GPIOClk;
+	uint32_t RX_GPIOFunc;
 	uint16_t RX_Pin;
 	uint16_t RX_Src;
 	
 #ifdef USARTx_USE_DMA
 	NVIC_InitTypeDef NVIC_USART;
 	NVIC_InitTypeDef NVIC_DMA_TX;
-	NVIC_InitTypeDef NVIC_DMA_RX;
 	
 	RCC_AXXPeriphClockCmd DMA_CLK;
 	uint32_t DMA_Func;
@@ -62,15 +65,11 @@ typedef struct USART_DRIVER_T
 	uint8_t* DMA_TX_Buffer;
 	DMA_Stream_TypeDef* DMA_TX_Stream;
 	uint32_t DMA_TX_CH;
-	uint32_t DMA_TX_TC;
-	uint32_t DMA_TX_TE;
 	
 	uint32_t DMA_RX_Size;
 	uint8_t* DMA_RX_Buffer;
 	DMA_Stream_TypeDef* DMA_RX_Stream;
 	uint32_t DMA_RX_CH;
-	uint32_t DMA_RX_TC;
-	uint32_t DMA_RX_TE;
 #endif
 	uint8_t GPIO_AF_USART;
 	

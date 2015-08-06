@@ -51,6 +51,44 @@ void Quaternion_FromEuler(float *q, float *rpy)
 	q[3] = sPsi2 * cThe2 * cPhi2 - cPsi2 * sThe2 * sPhi2;
 }
 
+void Quaternion_ToEuler(float *q, float* rpy)
+{
+	float R[3][3];
+	//Z-Y-X
+	R[0][0] = 2.0f * (q[0] * q[0] + q[1] * q[1]) - 1.0f;
+	R[0][1] = 2.0f * (q[1] * q[2] + q[0] * q[3]);
+	R[0][2] = 2.0f * (q[1] * q[3] - q[0] * q[2]);
+	//R[1][0] = 2.0f * (q[1] * q[2] - q[0] * q[3]);
+	//R[1][1] = 2.0f * (q[0] * q[0] + q[2] * q[2]) - 1.0f;
+	R[1][2] = 2.0f * (q[2] * q[3] + q[0] * q[1]);
+	//R[2][0] = 2.0f * (q[1] * q[3] + q[0] * q[2]);
+	//R[2][1] = 2.0f * (q[2] * q[3] - q[0] * q[1]);
+	R[2][2] = 2.0f * (q[0] * q[0] + q[3] * q[3]) - 1.0f;
+
+	//roll
+	rpy[0] = FastAtan2(R[1][2], R[2][2]);
+	if (rpy[0] == PI)
+		rpy[0] = -PI_2;
+	//pitch
+	if (R[0][2] >= 1.0f)
+		rpy[1] = -PI_2;
+	else if (R[0][2] <= -1.0f)
+		rpy[1] = PI_2;
+	else
+		rpy[1] = FastAsin(-R[0][2]);
+	//yaw
+	rpy[2] = FastAtan2(R[0][1], R[0][0]);
+	if (rpy[2] < 0.0f){
+		rpy[2] += _2_PI;
+	}
+	if (rpy[2] > _2_PI){
+		rpy[2] = 0.0f;
+	}
+	//rpy[0] = RADTODEG(rpy[0]);
+	//rpy[1] = RADTODEG(rpy[1]);
+	//rpy[2] = RADTODEG(rpy[2]);
+}
+
 void Quaternion_FromRotationMatrix(float *R, float *Q)
 {
 #if 0
@@ -179,4 +217,39 @@ void Quaternion_RungeKutta4(float *q, float *w, float dt, int normalize)
 	if (normalize){
 		Quaternion_Normalize(q);
 	}
+}
+
+void Quaternion_From6AxisData(float* q, float *accel, float *mag)
+{
+	// local variables
+	float norma, normx, normy;
+	//float normm;
+	//3x3 rotation matrix
+	float R[9];
+	// place the un-normalized gravity and geomagnetic vectors into
+	// the rotation matrix z and x axes
+	R[2] = accel[0]; R[5] = accel[1]; R[8] = accel[2];
+	R[0] = mag[0]; R[3] = mag[1]; R[6] = mag[2];
+	// set y vector to vector product of z and x vectors
+	R[1] = R[5] * R[6] - R[8] * R[3];
+	R[4] = R[8] * R[0] - R[2] * R[6];
+	R[7] = R[2] * R[3] - R[5] * R[0];
+	// set x vector to vector product of y and z vectors
+	R[0] = R[4] * R[8] - R[7] * R[5];
+	R[3] = R[7] * R[2] - R[1] * R[8];
+	R[6] = R[1] * R[5] - R[4] * R[2];
+	// calculate the vector moduli invert
+	norma = FastSqrtI(accel[0] * accel[0] + accel[1] * accel[1] + accel[2] * accel[2]);
+	//normm = FastSqrtI(mag[0] * mag[0] + mag[1] * mag[1] + mag[2] * mag[2]);
+	normx = FastSqrtI(R[0] * R[0] + R[3] * R[3] + R[6] * R[6]);
+	normy = FastSqrtI(R[1] * R[1] + R[4] * R[4] + R[7] * R[7]);
+	// normalize the rotation matrix
+	// normalize x axis
+	R[0] *= normx; R[3] *= normx; R[6] *= normx;
+	// normalize y axis
+	R[1] *= normy; R[4] *= normy; R[7] *= normy;
+	// normalize z axis
+	R[2] *= norma; R[5] *= norma; R[8] *= norma;
+	
+	Quaternion_FromRotationMatrix(R, q);
 }

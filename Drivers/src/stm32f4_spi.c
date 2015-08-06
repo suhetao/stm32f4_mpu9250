@@ -27,7 +27,6 @@ static uint8_t DUMMY_BYTE = 0xA5;
 
 void SPIx_Init(SPI_Driver* SPIx)
 {
-	SPI_InitTypeDef  SPI_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
 #ifdef SPIx_USE_DMA
 	DMA_InitTypeDef DMA_InitStructure;
@@ -59,20 +58,11 @@ void SPIx_Init(SPI_Driver* SPIx)
 	GPIO_Init(SPIx->Gpio_CS, &GPIO_InitStructure);
 
 	// Chip DeSelect high
-	CHIP_DESELECT(SPIx);
+	Chip_DeSelect(SPIx);
 
 	//SPI configuration -------------------------------------------------------*/
 	SPI_I2S_DeInit(SPIx->SPI);
-	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
-	SPI_InitStructure.SPI_DataSize = SPIx->SPI_DataSize;
-	SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
-	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPIx->SPI_Prescaler;
-	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
-	SPI_InitStructure.SPI_CRCPolynomial = 7;
-	SPI_Init(SPIx->SPI, &SPI_InitStructure);
+	SPI_Init(SPIx->SPI, &SPIx->SPI_Init);
 
 	SPI_CalculateCRC(SPIx->SPI, DISABLE);
 
@@ -166,7 +156,7 @@ uint8_t SPIx_Read_Reg(SPI_Driver* SPIx, uint8_t reg)
 
 	reg += 0x80; //reading procedure has to set the most significant bit
 	// Chip Select low 
-	CHIP_SELECT(SPIx);
+	Chip_Select(SPIx);
 
 	// Send Register Address
 	SPIx_SendByte(SPIx, reg);
@@ -174,7 +164,7 @@ uint8_t SPIx_Read_Reg(SPI_Driver* SPIx, uint8_t reg)
 	tmp = SPIx_SendByte(SPIx, DUMMY_BYTE);  
 
 	// Chip Select high
-	CHIP_DESELECT(SPIx);
+	Chip_DeSelect(SPIx);
 
 	return tmp;
 }
@@ -182,7 +172,7 @@ uint8_t SPIx_Read_Reg(SPI_Driver* SPIx, uint8_t reg)
 void SPIx_Write_Reg(SPI_Driver* SPIx, uint8_t regAddr, uint8_t data) {
 
 	// Chip Select low 
-	CHIP_SELECT(SPIx);
+	Chip_Select(SPIx);
 
 	// Send Register Address
 	SPIx_SendByte(SPIx, regAddr);
@@ -190,7 +180,7 @@ void SPIx_Write_Reg(SPI_Driver* SPIx, uint8_t regAddr, uint8_t data) {
 	SPIx_SendByte(SPIx, data);  
 
 	// Chip Select high
-	CHIP_DESELECT(SPIx);
+	Chip_DeSelect(SPIx);
 }
 
 void SPIx_Read_Regs(SPI_Driver* SPIx, uint8_t regAddr, uint8_t length, uint8_t* buffer)
@@ -199,7 +189,7 @@ void SPIx_Read_Regs(SPI_Driver* SPIx, uint8_t regAddr, uint8_t length, uint8_t* 
 
 	regAddr += 0xc0; //reading procedure has to set the most significant bit
 	// Chip Select low 
-	CHIP_SELECT(SPIx);
+	Chip_Select(SPIx);
 
 	// Send Register Address
 	SPIx_SendByte(SPIx, regAddr);
@@ -210,7 +200,7 @@ void SPIx_Read_Regs(SPI_Driver* SPIx, uint8_t regAddr, uint8_t length, uint8_t* 
 		i++;
 	}
 	// Chip Select high
-	CHIP_DESELECT(SPIx);
+	Chip_DeSelect(SPIx);
 }
 
 #ifdef SPIx_USE_DMA
@@ -218,7 +208,7 @@ void SPIx_DMA_Read_Regs(SPI_Driver* SPIx, uint8_t regAddr, uint8_t length, uint8
 {
 	regAddr += 0xc0; //reading procedure has to set the most significant bit
 	// Chip Select low 
-	CHIP_SELECT(SPIx);
+	Chip_Select(SPIx);
 	
 	// Send Register Address
 	SPIx_SendByte(SPIx, regAddr);
@@ -270,7 +260,7 @@ void SPIx_ReadBytes(SPI_Driver* SPIx,uint8_t length, uint8_t* buffer)
   uint8_t i = 0;
 
   // Select Mems Sensor: Chip Select low 
-	CHIP_SELECT(SPIx);
+	Chip_Select(SPIx);
 	
   while(i < length){
     // Read a byte from the MEMS Sensor
@@ -278,14 +268,14 @@ void SPIx_ReadBytes(SPI_Driver* SPIx,uint8_t length, uint8_t* buffer)
     i++;
   }
   // Deselect Mems Sensor: Chip Select high
-  CHIP_DESELECT(SPIx);
+  Chip_DeSelect(SPIx);
 }
 
 void SPIx_SetDivisor(SPI_Driver* SPIx, uint16_t Prescaler)
 {
 	uint16_t tmp;
 	
-	if(SPIx->SPI_Prescaler == Prescaler){
+	if(SPIx->SPI_Init.SPI_BaudRatePrescaler == Prescaler){
 		return;
 	}
 	SPI_Cmd(SPIx->SPI, DISABLE);

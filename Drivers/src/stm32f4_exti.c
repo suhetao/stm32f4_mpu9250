@@ -21,22 +21,29 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _STM32F4_RCC_H
-#define _STM32F4_RCC_H
+#include "stm32f4_exti.h"
 
-#include "stm32f4xx.h"
-
-typedef struct PLL_PARAMS_T
+void EXTIx_Init(EXTI_Driver* EXTIx)
 {
-	uint32_t PLLM;
-	uint32_t PLLN;
-	uint32_t PLLP;
-	uint32_t PLLQ;
+	GPIO_InitTypeDef GPIO_InitStructure;
+	
+  //Enable GPIO clocks
+	EXTIx->GPIO_CLK(EXTIx->GPIO_Func, ENABLE);
+  //Enable SYSCFG clock
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+  
+  //Configure GPIO pin as input floating
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Pin = EXTIx->GPIO_Pin;
+  GPIO_Init(EXTIx->Gpio, &GPIO_InitStructure);
+
+  //Connect EXTI Line to GPIO Pin
+	SYSCFG_EXTILineConfig(EXTIx->EXTI_PortSourceGPIO, EXTIx->EXTI_PinSource);
+		
+  //Configure EXTI line
+  EXTI_Init(&EXTIx->EXIT_Init);
+		
+	//Enable and set EXTI Interrupt priority
+  NVIC_Init(&EXTIx->NVIC_Init); 
 }
-PLL_PARAMS;
-
-typedef void (*RCC_AXXPeriphClockCmd)(uint32_t RCC_AXXPeriph, FunctionalState NewState);
-
-void RCC_SystemCoreClockUpdate(PLL_PARAMS params);
-
-#endif

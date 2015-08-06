@@ -53,8 +53,7 @@ typedef struct SPI_DRIVER_T
 	uint16_t MISO_Src;
 	uint16_t MOSI_Src;
 	
-	uint16_t SPI_Prescaler;
-	uint16_t SPI_DataSize;
+	SPI_InitTypeDef SPI_Init;
 
 #ifdef SPIx_USE_DMA
 	RCC_AXXPeriphClockCmd DMA_CLK;
@@ -74,12 +73,12 @@ typedef struct SPI_DRIVER_T
 	
 }SPI_Driver;
 
-__inline void CHIP_SELECT(SPI_Driver* SPIx)
+__inline void Chip_Select(SPI_Driver* SPIx)
 {
 	GPIO_ResetBits((SPIx)->Gpio_CS, (SPIx)->CS_Pin);
 }
 
-__inline void CHIP_DESELECT(SPI_Driver* SPIx){
+__inline void Chip_DeSelect(SPI_Driver* SPIx){
 	GPIO_SetBits((SPIx)->Gpio_CS, (SPIx)->CS_Pin);
 }
 

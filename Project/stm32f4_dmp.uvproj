@@ -12,13 +12,13 @@
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32F407VE</Device>
+          <Device>STM32F407VG</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x807FFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
+          <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile>"Startup\ST\STM32F4xx\startup_stm32f40_41xxx.s" ("STM32F40/41xxx Startup Code")</StartupFile>
-          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL080000)</FlashDriverDll>
-          <DeviceId>6106</DeviceId>
+          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL0100000)</FlashDriverDll>
+          <DeviceId>6103</DeviceId>
           <RegisterFile>stm32f4xx.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
@@ -172,7 +172,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -282,7 +282,7 @@
               <IROM>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x80000</Size>
+                <Size>0x100000</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -307,7 +307,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x80000</Size>
+                <Size>0x100000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -362,7 +362,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER STM32F40_41xxx ARM_MATH_CM4 __FPU_PRESENT MPU9250</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Drivers\inc;..\Application\inc;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc;..\miniIMU;..\miniIMU\FP;..\miniAHRS</IncludePath>
+              <IncludePath>..\Libraries\CMSIS\Include;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Drivers\inc;..\Application\inc;..\Libraries\eMPL;..\Matrix\inc;..\Algorithm\inc;..\Math\inc;..\miniIMU;..\miniIMU\FP;..\miniAHRS;..\Data\inc;..\Gps\inc;..\Common\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -406,14 +406,14 @@
           <GroupName>Application</GroupName>
           <Files>
             <File>
+              <FileName>stm32f4_rcc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Application\Src\stm32f4_rcc.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f4_delay.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Application\Src\stm32f4_delay.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4_exti.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Application\Src\stm32f4_exti.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4_mpu9250.c</FileName>
@@ -426,24 +426,9 @@
               <FilePath>..\Application\Src\main.c</FilePath>
             </File>
             <File>
-              <FileName>system_stm32f4xx.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Application\Src\system_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4_rcc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Application\Src\stm32f4_rcc.c</FilePath>
-            </File>
-            <File>
               <FileName>stm32f4_serial.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Application\src\stm32f4_serial.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4_string.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Application\src\stm32f4_string.c</FilePath>
             </File>
             <File>
               <FileName>stm32f4_ms5611.c</FileName>
@@ -451,9 +436,9 @@
               <FilePath>..\Application\src\stm32f4_ms5611.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f4_gps.c</FileName>
+              <FileName>stm32f4_ublox.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Application\src\stm32f4_gps.c</FilePath>
+              <FilePath>..\Application\src\stm32f4_ublox.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -521,6 +506,11 @@
           <GroupName>CMSIS</GroupName>
           <Files>
             <File>
+              <FileName>system_stm32f4xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Application\Src\system_stm32f4xx.c</FilePath>
+            </File>
+            <File>
               <FileName>startup_stm32f40_41xxx.s</FileName>
               <FileType>2</FileType>
               <FilePath>..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup_stm32f40_41xxx.s</FilePath>
@@ -561,11 +551,6 @@
               <FilePath>..\Algorithm\src\Quaternion.c</FilePath>
             </File>
             <File>
-              <FileName>Control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Algorithm\src\Control.c</FilePath>
-            </File>
-            <File>
               <FileName>PID.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\PID.c</FilePath>
@@ -585,6 +570,11 @@
               <FileType>1</FileType>
               <FilePath>..\Algorithm\src\CKF.C</FilePath>
             </File>
+            <File>
+              <FileName>Double.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Algorithm\inc\Double.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -594,6 +584,11 @@
               <FileName>Matrix.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Matrix\src\Matrix.c</FilePath>
+            </File>
+            <File>
+              <FileName>DoubleMatrix.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Matrix\src\DoubleMatrix.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -619,6 +614,16 @@
               <FileName>stm32f4_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Drivers\src\stm32f4_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4_exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\src\stm32f4_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\src\stm32f4_gpio.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -674,6 +679,46 @@
               <FileName>miniAHRS.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\miniAHRS\miniAHRS.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Data</GroupName>
+          <Files>
+            <File>
+              <FileName>Fifo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Data\src\Fifo.c</FilePath>
+            </File>
+            <File>
+              <FileName>Queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Data\src\Queue.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Gps</GroupName>
+          <Files>
+            <File>
+              <FileName>Nema.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Gps\src\Nema.c</FilePath>
+            </File>
+            <File>
+              <FileName>Map.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Gps\src\Map.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Common</GroupName>
+          <Files>
+            <File>
+              <FileName>Memory.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Common\src\Memory.c</FilePath>
             </File>
           </Files>
         </Group>

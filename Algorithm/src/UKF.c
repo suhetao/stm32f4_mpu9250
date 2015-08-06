@@ -28,16 +28,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define USE_4TH_RUNGE_KUTTA
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune
-#define UKF_PQ_INITIAL 0.000001
-#define UKF_PW_INITIAL 0.000001
+#define UKF_PQ_INITIAL 0.000001f
+#define UKF_PW_INITIAL 0.000001f
 
-#define UKF_QQ_INITIAL 0.0000045
-#define UKF_QW_INITIAL 0.0000025
+#define UKF_QQ_INITIAL 0.0000045f
+#define UKF_QW_INITIAL 0.0000025f
 
-#define UKF_RQ_INITIAL 0.000001
-#define UKF_RA_INITIAL 0.07
-#define UKF_RW_INITIAL 0.0525
-#define UKF_RM_INITIAL 0.105
+#define UKF_RQ_INITIAL 0.000001f
+#define UKF_RA_INITIAL 0.07f
+#define UKF_RW_INITIAL 0.0525f
+#define UKF_RM_INITIAL 0.105f
 
 #define UKF_alpha (1.0f)
 #define UKF_beta (2.0f)

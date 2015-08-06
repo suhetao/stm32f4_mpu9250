@@ -28,16 +28,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define USE_4TH_RUNGE_KUTTA
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune
-#define EKF_PQ_INITIAL 0.000001
-#define EKF_PW_INITIAL 0.000001
+#define EKF_PQ_INITIAL 0.000001f
+#define EKF_PW_INITIAL 0.000010f
 
-#define EKF_QQ_INITIAL 0.000045
-#define EKF_QW_INITIAL 0.000025
+#define EKF_QQ_INITIAL 0.000045f
+#define EKF_QW_INITIAL 0.00025f
 
-#define EKF_RQ_INITIAL 0.000001
-#define EKF_RA_INITIAL 0.07
-#define EKF_RW_INITIAL 0.0525
-#define EKF_RM_INITIAL 0.105
+#define EKF_RQ_INITIAL 0.000001f
+#define EKF_RA_INITIAL 0.07f
+#define EKF_RW_INITIAL 0.525f
+#define EKF_RM_INITIAL 0.105f
 //////////////////////////////////////////////////////////////////////////
 
 void EKF_New(EKF_Filter* ekf)
@@ -48,15 +48,17 @@ void EKF_New(EKF_Filter* ekf)
 	float32_t *R = ekf->R_f32;
 	//////////////////////////////////////////////////////////////////////////
 	arm_mat_init_f32(&ekf->P, EKF_STATE_DIM, EKF_STATE_DIM, ekf->P_f32);
-	arm_mat_init_f32(&ekf->Q, EKF_STATE_DIM, EKF_STATE_DIM, ekf->Q_f32);
-	arm_mat_init_f32(&ekf->R, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, ekf->R_f32);
-
+	arm_mat_zero_f32(&ekf->P);
 	P[0] = P[8] = P[16] = P[24] = EKF_PQ_INITIAL;
 	P[32] = P[40] = P[48] = EKF_PW_INITIAL;
-
+	//
+	arm_mat_init_f32(&ekf->Q, EKF_STATE_DIM, EKF_STATE_DIM, ekf->Q_f32);
+	arm_mat_zero_f32(&ekf->Q);
 	Q[0] = Q[8] = Q[16] = Q[24] = EKF_QQ_INITIAL;
 	Q[32] = Q[40] = Q[48] = EKF_QW_INITIAL;
-
+	//
+	arm_mat_init_f32(&ekf->R, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, ekf->R_f32);
+	arm_mat_zero_f32(&ekf->R);
 	R[0] = R[14] = R[28] = R[42] = EKF_RQ_INITIAL;
 	R[56] = R[70] = R[84] = EKF_RA_INITIAL;
 	R[98] = R[112] = R[126] = EKF_RW_INITIAL;
@@ -65,27 +67,29 @@ void EKF_New(EKF_Filter* ekf)
 	arm_mat_init_f32(&ekf->K, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, ekf->K_f32);
 	arm_mat_init_f32(&ekf->KT, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, ekf->KT_f32);
 	arm_mat_init_f32(&ekf->S, EKF_MEASUREMENT_DIM, EKF_MEASUREMENT_DIM, ekf->S_f32);
-	arm_mat_init_f32(&ekf->F, EKF_STATE_DIM, EKF_STATE_DIM, ekf->F_f32);
 	//
+	arm_mat_init_f32(&ekf->F, EKF_STATE_DIM, EKF_STATE_DIM, ekf->F_f32);
+	arm_mat_zero_f32(&ekf->F);
 	arm_mat_identity_f32(&ekf->F, 1.0f);
 	//
 	arm_mat_init_f32(&ekf->FT, EKF_STATE_DIM, EKF_STATE_DIM, ekf->FT_f32);
-	arm_mat_init_f32(&ekf->H, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, H);
 	//
-	//row 0~3, col 0~3
-	H[0] = H[8] = H[16] = H[24] = 1.0f; //q
-	//row 7~9, col 4~6
-	H[53] = H[61] = H[69] = 1.0f; //w
+	arm_mat_init_f32(&ekf->H, EKF_MEASUREMENT_DIM, EKF_STATE_DIM, H);
+	arm_mat_zero_f32(&ekf->H);
+	H[0] = H[8] = H[16] = H[24] = 1.0f; //q row 0~3, col 0~3
+	H[53] = H[61] = H[69] = 1.0f; //w row 7~9, col 4~6
 	//
 	arm_mat_init_f32(&ekf->HT, EKF_STATE_DIM, EKF_MEASUREMENT_DIM, ekf->HT_f32);
 	//////////////////////////////////////////////////////////////////////////
 	arm_mat_init_f32(&ekf->I, EKF_STATE_DIM, EKF_STATE_DIM, ekf->I_f32);
+	arm_mat_zero_f32(&ekf->I);
 	arm_mat_identity_f32(&ekf->I, 1.0f);
 	//////////////////////////////////////////////////////////////////////////
 	arm_mat_init_f32(&ekf->X, EKF_STATE_DIM, 1, ekf->X_f32);
 	arm_mat_zero_f32(&ekf->X);
 	//////////////////////////////////////////////////////////////////////////
 	arm_mat_init_f32(&ekf->Y, EKF_MEASUREMENT_DIM, 1, ekf->Y_f32);
+	arm_mat_zero_f32(&ekf->Y);
 	//////////////////////////////////////////////////////////////////////////
 	//
 	arm_mat_init_f32(&ekf->tmpP, EKF_STATE_DIM, EKF_STATE_DIM, ekf->tmpP_f32);

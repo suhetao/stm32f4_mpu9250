@@ -21,22 +21,34 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _STM32F4_RCC_H
-#define _STM32F4_RCC_H
+#include "Queue.h"
+#include "Memory.h"
 
-#include "stm32f4xx.h"
-
-typedef struct PLL_PARAMS_T
+s32 Queue_Enqueue(PQueue queue, s8* string, u16 len)
 {
-	uint32_t PLLM;
-	uint32_t PLLN;
-	uint32_t PLLP;
-	uint32_t PLLQ;
+	if(Queue_IsFull(queue)){
+		return -1;
+	}
+	queue->Size++;
+	//////////////////////////////////////////////////////////////////////////
+	queue->Buffs[queue->Tail].Len = len;
+	MemCpy((u8*)queue->Buffs[queue->Tail].Buff, (u8*)string, len);
+	//////////////////////////////////////////////////////////////////////////
+	queue->Tail++;
+	queue->Tail &= MAX_QUEUE_MASK;
+	return 0;
 }
-PLL_PARAMS;
 
-typedef void (*RCC_AXXPeriphClockCmd)(uint32_t RCC_AXXPeriph, FunctionalState NewState);
-
-void RCC_SystemCoreClockUpdate(PLL_PARAMS params);
-
-#endif
+s32 Queue_Dequeue(PQueue queue, Buff* buff)
+{
+	if(Queue_IsEmpty(queue)){
+		return -1;
+	}
+	queue->Size--;
+	//////////////////////////////////////////////////////////////////////////
+	*buff = queue->Buffs[queue->Head];
+	//////////////////////////////////////////////////////////////////////////
+	queue->Head++;
+	queue->Head &= MAX_QUEUE_MASK;
+	return 0;
+}

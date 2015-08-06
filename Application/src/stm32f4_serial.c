@@ -23,29 +23,25 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "stm32f4_serial.h"
 #include "stm32f4_usart.h"
-#include "stm32f4_common.h"
-#include "stm32f4_string.h"
+#include "Memory.h"
 
 #ifdef USARTx_USE_DMA
 static uint8_t DMA_TxBuffer[DEFAULT_BUFFERSIZE];
 static uint8_t DMA_RxBuffer[DEFAULT_BUFFERSIZE];
-static uint8_t USARTx_Rx_Buffer[DEFAULT_BUFFERSIZE];
+//static uint8_t USARTx_Rx_Buffer[DEFAULT_BUFFERSIZE];
 #endif
 
 static USART_Driver Serial = {
 	USART1, RCC_APB2PeriphClockCmd, RCC_APB2Periph_USART1, DEFAULT_BAUDRATE,
-	GPIOA, RCC_AHB1PeriphClockCmd , RCC_AHB1Periph_GPIOA,
-	GPIO_Pin_9, GPIO_PinSource9, GPIO_Pin_10, GPIO_PinSource10,
+	GPIOA, RCC_AHB1PeriphClockCmd , RCC_AHB1Periph_GPIOA, GPIO_Pin_9, GPIO_PinSource9,
+	GPIOA, RCC_AHB1PeriphClockCmd , RCC_AHB1Periph_GPIOA, GPIO_Pin_10, GPIO_PinSource10,
 #ifdef USARTx_USE_DMA
-	{ USART1_IRQn, 1, 0, ENABLE },
-	{	DMA2_Stream7_IRQn, 1, 1, ENABLE },
-	{	DMA2_Stream5_IRQn, 1, 2, ENABLE },
-	
+	{ USART1_IRQn, 1, 2, ENABLE },
+	{	DMA2_Stream7_IRQn, 1, 3, ENABLE },
+
 	RCC_AHB1PeriphClockCmd, RCC_AHB1Periph_DMA2,
-	DEFAULT_BUFFERSIZE, DMA_TxBuffer, DMA2_Stream7,
-	DMA_Channel_4, DMA_FLAG_TCIF7, DMA_FLAG_TEIF7,
-	DEFAULT_BUFFERSIZE, DMA_RxBuffer, DMA2_Stream5,
-	DMA_Channel_4, DMA_FLAG_TCIF5, DMA_FLAG_TEIF5,
+	DEFAULT_BUFFERSIZE, DMA_TxBuffer, DMA2_Stream7, DMA_Channel_4,
+	DEFAULT_BUFFERSIZE, DMA_RxBuffer, DMA2_Stream5, DMA_Channel_4,
 #endif
 	GPIO_AF_USART1
 };
@@ -80,7 +76,7 @@ void Serial_Upload(short accel[3], short gyro[3], short compass[3], long quat[4]
 	//memset(out, 0, PACKET_LENGTH);
 	//out[0] = 0x55;
 	//out[1] = 0xAA;
-	
+
 	*sDest++ = 0xAA55;
 	//accel
 	/*
@@ -158,13 +154,13 @@ void Serial_Upload(short accel[3], short gyro[3], short compass[3], long quat[4]
 	out[45] = (uint8_t)(pressure >> 24);
 	*/
 	*lDest++ = pressure;
-	
+
 	//out[44] = '\r';
 	//out[45] = '\n';
-	
+
 	sDest = (short*)lDest;
 	*sDest = 0x0A0D;
-	
+
 	Serial_SendBytes((uint8_t*)out, PACKET_LENGTH);
 }
 
@@ -173,17 +169,20 @@ void Serial_Upload(short accel[3], short gyro[3], short compass[3], long quat[4]
 //such as using usart1, DMA2_Stream7 for tx, DMA2_Stream5 for rx
 void USART1_IRQHandler(void)                                 
 {
-	uint32_t usage = 0;
+	//u16 DATA_LEN = 0;
+	if(USART_GetITStatus(USART1, USART_IT_TC) != RESET){
+		USART_ITConfig(USART1, USART_IT_TC, DISABLE);
+	}
+	else if(USART_GetITStatus(USART1, USART_IT_IDLE) != RESET){
+		USART1->SR;
+		USART1->DR;
 
-	if(USART_GetITStatus(USART1, USART_IT_IDLE) != RESET){
-		usage = USART1->SR;
-		usage = USART1->DR;
-		
 		DMA_Cmd(DMA2_Stream5, DISABLE);
-		usage = DEFAULT_BUFFERSIZE - DMA_GetCurrDataCounter(DMA2_Stream5);
-		FastMemCpy(USARTx_Rx_Buffer, DMA_RxBuffer, usage);
+		DMA_ClearFlag(DMA2_Stream5, DMA_FLAG_TCIF5);
+		//DATA_LEN = DEFAULT_BUFFERSIZE - DMA_GetCurrDataCounter(DMA2_Stream5);
+		//FastMemCpy(USARTx_Rx_Buffer, DMA_RxBuffer, DATA_LEN);
 		DMA_SetCurrDataCounter(DMA2_Stream5, DEFAULT_BUFFERSIZE);
-		DMA_Cmd(DMA2_Stream5,ENABLE);
+		DMA_Cmd(DMA2_Stream5, ENABLE);
 	}
 }
 
@@ -192,19 +191,9 @@ void DMA2_Stream7_IRQHandler(void)
 {
 	if(DMA_GetITStatus(DMA2_Stream7, DMA_IT_TCIF7)){
 		DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
-		DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TEIF7);
 		DMA_Cmd(DMA2_Stream7, DISABLE);
+		USART_ITConfig(USART1, USART_IT_TC, ENABLE);
 	}	
-}
-
-//RX
-void DMA2_Stream5_IRQHandler(void)
-{
-	DMA_ClearITPendingBit(DMA2_Stream5, DMA_IT_TCIF5);
-	DMA_ClearITPendingBit(DMA2_Stream5, DMA_IT_TCIF5);
-	DMA_Cmd(DMA2_Stream5, DISABLE);
-	DMA_SetCurrDataCounter(DMA2_Stream5, DEFAULT_BUFFERSIZE);
-	DMA_Cmd(DMA2_Stream5, ENABLE);
 }
 
 #endif

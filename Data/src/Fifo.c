@@ -21,22 +21,34 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _STM32F4_RCC_H
-#define _STM32F4_RCC_H
+#include "Fifo.h"
+#include "Memory.h"
 
-#include "stm32f4xx.h"
-
-typedef struct PLL_PARAMS_T
+void Fifo_Init(Fifo* fifo, u8 *buff, u16 len)
 {
-	uint32_t PLLM;
-	uint32_t PLLN;
-	uint32_t PLLP;
-	uint32_t PLLQ;
+	fifo->Data = buff;
+	fifo->Size = len;
+	fifo->In = fifo->Out = 0;
 }
-PLL_PARAMS;
 
-typedef void (*RCC_AXXPeriphClockCmd)(uint32_t RCC_AXXPeriph, FunctionalState NewState);
+u16 Fifo_Get(Fifo* fifo, u8 *buff, u16 len)
+{
+	u16 l;
+	len = MIN(len, fifo->In - fifo->Out);  
+	l = MIN(len, fifo->Size - (fifo->Out & (fifo->Size - 1)));  
+	MemCpy(buff, fifo->Data + (fifo->Out & (fifo->Size - 1)), l);  
+	MemCpy(buff + l, fifo->Data, len - l);  
+	fifo->Out += len;  
+	return len;  
+}
 
-void RCC_SystemCoreClockUpdate(PLL_PARAMS params);
-
-#endif
+void Fifo_Put(Fifo *fifo, u8 *buff, u16 len)
+{
+	u16 fixLen;
+	//////////////////////////////////////////////////////////////////////////
+	len = MIN(len, fifo->Size - fifo->In + fifo->Out);
+	fixLen = MIN(len, fifo->Size - (fifo->In & (fifo->Size - 1)));
+	MemCpy(fifo->Data + (fifo->In & (fifo->Size - 1)), buff, fixLen);  
+	MemCpy(fifo->Data, buff + fixLen, len - fixLen);  		
+	fifo->In += len;
+}

@@ -28,16 +28,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define USE_4TH_RUNGE_KUTTA
 //////////////////////////////////////////////////////////////////////////
 //all parameters below need to be tune including the weight
-#define CKF_PQ_INITIAL 0.000001
-#define CKF_PW_INITIAL 0.000001
+#define CKF_PQ_INITIAL 0.000001f
+#define CKF_PW_INITIAL 0.000001f
 
-#define CKF_QQ_INITIAL 0.0000045
-#define CKF_QW_INITIAL 0.0000025
+#define CKF_QQ_INITIAL 0.0000045f
+#define CKF_QW_INITIAL 0.0000025f
 
-#define CKF_RQ_INITIAL 0.000001
-#define CKF_RA_INITIAL 0.07
-#define CKF_RW_INITIAL 0.0525
-#define CKF_RM_INITIAL 0.105
+#define CKF_RQ_INITIAL 0.000001f
+#define CKF_RA_INITIAL 0.07f
+#define CKF_RW_INITIAL 0.0525f
+#define CKF_RM_INITIAL 0.105f
 //////////////////////////////////////////////////////////////////////////
 //
 void CKF_New(CKF_Filter* ckf)
@@ -55,19 +55,23 @@ void CKF_New(CKF_Filter* ckf)
 
 	arm_sqrt_f32(kesi, &kesi);
 	arm_mat_init_f32(&KesiPuls, CKF_STATE_DIM, CKF_STATE_DIM, KesiPuls_f32);
+	arm_mat_zero_f32(&KesiPuls);
 	arm_mat_init_f32(&KesiMinu, CKF_STATE_DIM, CKF_STATE_DIM, KesiMinus_f32);
+	arm_mat_zero_f32(&KesiMinu);
 	arm_mat_identity_f32(&KesiPuls, kesi);
 	arm_mat_identity_f32(&KesiMinu, -kesi);
 	arm_mat_init_f32(&ckf->Kesi, CKF_STATE_DIM, CKF_CP_POINTS, ckf->Kesi_f32);
 	arm_mat_setsubmatrix_f32(&ckf->Kesi, &KesiPuls, 0, 0);
 	arm_mat_setsubmatrix_f32(&ckf->Kesi, &KesiMinu, 0, CKF_STATE_DIM);
 	arm_mat_init_f32(&ckf->iKesi, CKF_STATE_DIM, 1, ckf->iKesi_f32);
+	arm_mat_zero_f32(&ckf->iKesi);
 
 	//initialise weight
 	ckf->W = 1.0f / (float32_t)CKF_CP_POINTS;
 
 	//initialise P
 	arm_mat_init_f32(&ckf->P, CKF_STATE_DIM, CKF_STATE_DIM, ckf->P_f32);
+	arm_mat_zero_f32(&ckf->P);
 	P[0] = P[8] = P[16] = P[24] = CKF_PQ_INITIAL;
 	P[32] = P[40] = P[48] = CKF_PW_INITIAL;
 
@@ -78,10 +82,12 @@ void CKF_New(CKF_Filter* ckf)
 	arm_mat_init_f32(&ckf->tmpPXY, CKF_STATE_DIM, CKF_MEASUREMENT_DIM, ckf->tmpPXY_f32);
 	//initialise Q
 	arm_mat_init_f32(&ckf->Q, CKF_STATE_DIM, CKF_STATE_DIM, ckf->Q_f32);
+	arm_mat_zero_f32(&ckf->Q);
 	Q[0] = Q[8] = Q[16] = Q[24] = CKF_QQ_INITIAL;
 	Q[32] = Q[40] = Q[48] = CKF_QW_INITIAL;
 	//initialise R
 	arm_mat_init_f32(&ckf->R, CKF_MEASUREMENT_DIM, CKF_MEASUREMENT_DIM, ckf->R_f32);
+	arm_mat_zero_f32(&ckf->R);
 	R[0] = R[14] = R[28] = R[42] = CKF_RQ_INITIAL;
 	R[56] = R[70] = R[84] = CKF_RA_INITIAL;
 	R[98] = R[112] = R[126] = CKF_RW_INITIAL;

@@ -21,22 +21,45 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef _STM32F4_RCC_H
-#define _STM32F4_RCC_H
+#ifndef _QUEUE_H
+#define _QUEUE_H
 
 #include "stm32f4xx.h"
 
-typedef struct PLL_PARAMS_T
+#define MAX_MESSAGE_LEN (10)
+#define MAX_QUEUE_LEN (32)
+#define MAX_QUEUE_MASK (31)
+
+typedef struct Buff_T
 {
-	uint32_t PLLM;
-	uint32_t PLLN;
-	uint32_t PLLP;
-	uint32_t PLLQ;
+	s8 Buff[MAX_MESSAGE_LEN];
+	u16 Len;
+}Buff;
+
+typedef struct QUEUE_T
+{
+	Buff Buffs[MAX_QUEUE_LEN];
+	u16 Head;
+	u16 Tail;
+	u16 Size;
+}Queue, *PQueue;
+
+__inline s32 Queue_IsFull(PQueue queue)
+{
+	return (queue->Size == MAX_QUEUE_LEN);
 }
-PLL_PARAMS;
 
-typedef void (*RCC_AXXPeriphClockCmd)(uint32_t RCC_AXXPeriph, FunctionalState NewState);
+__inline u16 Queue_Size(PQueue queue)
+{
+	return queue->Size;
+}
 
-void RCC_SystemCoreClockUpdate(PLL_PARAMS params);
+__inline s32 Queue_IsEmpty(PQueue queue)
+{
+	return (queue->Size == 0);
+}
+
+s32 Queue_Enqueue(PQueue queue, s8* string, u16 len);
+s32 Queue_Dequeue(PQueue queue, Buff* buff);
 
 #endif

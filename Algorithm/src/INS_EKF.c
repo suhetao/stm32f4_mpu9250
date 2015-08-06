@@ -30,13 +30,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //all parameters below need to be tune
 
 #define INS_EKF_PQ_INITIAL 0.1f //init quaternion (NED-to-body) uncertainty
-#define INS_EKF_PP_INITIAL 100 //init North-East-Alt position uncertainties, m
+#define INS_EKF_PP_INITIAL 100.0f //init North-East-Alt position uncertainties, m
 #define INS_EKF_PV_INITIAL 10.0f //init NED velocity uncertainties, m/s
 #define INS_EKF_PW_INITIAL 0.01f //init XYZ gyro bias uncertainties, rad/s
 #define INS_EKF_PA_INITIAL 0.1f //init XYZ accel bias uncertainties, m/s^2
 
 #define INS_EKF_QQ_INITIAL 0.001f //quaternion process noise
-#define INS_EKF_QP_INITIAL 0 //position process noise, m
+#define INS_EKF_QP_INITIAL 0.0f //position process noise, m
 #define INS_EKF_QV_INITIAL 2.0f //velocity process noise, m/s
 #define INS_EKF_QW_INITIAL 0.000001f //gyro bias process noise, rad/s
 #define INS_EKF_QA_INITIAL 0.000001f //accel bias process noise, m/s^2
@@ -59,6 +59,7 @@ void INS_EKF_New(INS_EKF_Filter* ins)
 	float32_t *R = ins->R_f32;
 	//////////////////////////////////////////////////////////////////////////
 	arm_mat_init_f32(&ins->P, INS_EKF_STATE_DIM, INS_EKF_STATE_DIM, ins->P_f32);
+	arm_mat_zero_f32(&ins->P);
 	//quaternion
 	P[0] = P[17] = P[34] = P[51] = INS_EKF_PQ_INITIAL;
 	//position
@@ -74,6 +75,7 @@ void INS_EKF_New(INS_EKF_Filter* ins)
 	arm_mat_init_f32(&ins->PHT, INS_EKF_STATE_DIM, INS_EKF_MEASUREMENT_DIM, ins->PHT_f32);
 
 	arm_mat_init_f32(&ins->Q, INS_EKF_STATE_DIM, INS_EKF_STATE_DIM, ins->Q_f32);
+	arm_mat_zero_f32(&ins->Q);
 	//quaternion
 	Q[0] = Q[17] = Q[34] = Q[51] = INS_EKF_QQ_INITIAL;
 	//position
@@ -86,6 +88,7 @@ void INS_EKF_New(INS_EKF_Filter* ins)
 	Q[221] = Q[238] = Q[255] = INS_EKF_QA_INITIAL;
 
 	arm_mat_init_f32(&ins->R, INS_EKF_MEASUREMENT_DIM, INS_EKF_MEASUREMENT_DIM, ins->R_f32);
+	arm_mat_zero_f32(&ins->R);
 	R[0] = R[10] = R[20] = INS_EKF_RM_INITIAL;
 	R[30] = R[40] = R[50] = INS_EKF_RP_INITIAL;
 	R[60] = R[70] = R[80] = INS_EKF_RV_INITIAL;
@@ -96,12 +99,14 @@ void INS_EKF_New(INS_EKF_Filter* ins)
 	arm_mat_init_f32(&ins->KY, INS_EKF_STATE_DIM, 1, ins->KY_f32);
 
 	arm_mat_init_f32(&ins->F, INS_EKF_STATE_DIM, INS_EKF_STATE_DIM, ins->F_f32);
+	arm_mat_zero_f32(&ins->F);
 	arm_mat_identity_f32(&ins->F, 1.0f);
 	F[71] = 1.0f; F[88] = 1.0f; F[105] = -1.0f;
 	//
 	arm_mat_init_f32(&ins->FT, INS_EKF_STATE_DIM, INS_EKF_STATE_DIM, ins->FT_f32);
 	//
 	arm_mat_init_f32(&ins->H, INS_EKF_MEASUREMENT_DIM, INS_EKF_STATE_DIM, H);
+	arm_mat_zero_f32(&ins->H);
 	H[52] = 1.0f; H[69] = 1.0f; H[86] = 1.0f; H[103] = 1.0f; H[120] = 1.0f; H[137] = 1.0f;
 
 	arm_mat_init_f32(&ins->HT, INS_EKF_STATE_DIM, INS_EKF_MEASUREMENT_DIM, ins->HT_f32);
@@ -114,6 +119,7 @@ void INS_EKF_New(INS_EKF_Filter* ins)
 	arm_mat_zero_f32(&ins->X);
 	//////////////////////////////////////////////////////////////////////////
 	arm_mat_init_f32(&ins->Y, INS_EKF_MEASUREMENT_DIM, 1, ins->Y_f32);
+	arm_mat_zero_f32(&ins->Y);
 	//////////////////////////////////////////////////////////////////////////
 	//
 }
