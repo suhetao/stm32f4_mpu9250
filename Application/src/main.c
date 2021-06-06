@@ -202,9 +202,14 @@ int main(void)
 			fRealAccel[2] = s16Accel[2] / 16384.0f;
 #if !defined USE_6AXIS_EKF && !defined USE_6AXIS_FP_EKF
 			if(!s32Result){
-				fRealMag[0] = s16Mag[0];
-				fRealMag[1] = s16Mag[1];
-				fRealMag[2] = s16Mag[2];
+				//Orientation of Axes of Sensitivity and Polarity of Rotation for Accelerometer and Gyroscope
+                                //vs
+                                //Orientation of Axes of Sensitivity for Compass
+                                //is different.
+				//see PS-MPU-9250A-01-v1.1.pdf page 38
+				fRealMag[0] = s16Mag[1];
+				fRealMag[1] = s16Mag[0];
+				fRealMag[2] = -s16Mag[2];
 			}
 #ifdef USE_DMP
 			//q30 to float
